@@ -45,7 +45,7 @@ test-lint:		## run linters
 	./dev/run-black --check
 
 
-test-version:		## validate version with pypi
+test-version:		## validate version
 	@agilekit git validate
 
 
@@ -60,7 +60,7 @@ bundle3.8:		## build python 3.8 bundle
 
 
 release-github:		## new tag in github
-	@agilekit git release --yes
+	@agilekit --config dev/agile.json git release --yes
 
 
 release-pypi:		## release to pypi and github tag
