@@ -49,7 +49,7 @@ meta = dict(
     packages=find_packages(exclude=["tests", "tests.*"]),
     long_description=read("readme.md"),
     long_description_content_type="text/markdown",
-    license="ISC",
+    license="BSD",
     author_email="luca@quantmind.com",
     maintainer_email="luca@quantmind.com",
     url="https://github.com/quantmind/metablock-py",
@@ -60,7 +60,7 @@ meta = dict(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: ISC License",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: JavaScript",
         "Programming Language :: Python",
