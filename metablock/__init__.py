@@ -4,7 +4,7 @@ from .orgs import Org
 from .spaces import Extension, Service, Space, SpaceExtension
 from .user import User
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __all__ = [
     "Metablock",
     "MetablockError",
