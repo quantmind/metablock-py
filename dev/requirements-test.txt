@@ -24,3 +24,5 @@ mypy
 # deploy
 twine
 agile-toolkit
+
+python-dotenv

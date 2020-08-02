@@ -14,6 +14,7 @@ def loop():
     loop.close()
 
 
-@pytest.fixture
-def cli(loop) -> Metablock:
-    return Metablock()
+@pytest.fixture(scope="session")
+async def cli(loop) -> Metablock:
+    async with Metablock() as cli:
+        yield cli

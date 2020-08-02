@@ -19,7 +19,8 @@ class Metablock(HttpComponent):
     """Metablock client
     """
 
-    url = os.environ.get("Metablock_URL", "https://api.metablock.io/v1")
+    url: str = os.environ.get("METABLOCK_URL", "https://api.metablock.io/v1")
+    auth_key: str = os.getenv("METABLOCK_API_TOKEN", "")
 
     def __init__(
         self,
@@ -30,7 +31,7 @@ class Metablock(HttpComponent):
         user_agent: str = DEFAULT_USER_AGENT,
     ) -> None:
         self.url: str = url if url is not None else self.url
-        self.auth_key: str = auth_key
+        self.auth_key: str = auth_key or self.auth_key
         self.auth_key_name = auth_key_name
         self.session: Optional[ClientSession] = session
         self.default_headers: Dict[str, str] = {
