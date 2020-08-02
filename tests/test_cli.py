@@ -11,6 +11,11 @@ async def test_user(cli: Metablock):
     assert user.id
 
 
+async def test_space(cli: Metablock):
+    space = await cli.get_space()
+    assert space["name"] == "metablock"
+
+
 async def test_spec(cli: Metablock):
     spec = await cli.spec()
     assert spec
