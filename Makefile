@@ -46,7 +46,7 @@ test-lint:		## run linters
 
 
 test-version:		## validate version
-	@agilekit git validate
+	@agilekit git validate --yes-no
 
 
 bundle3.6:		## build python 3.6 bundle
