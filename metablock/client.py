@@ -5,9 +5,9 @@ from typing import Dict, Optional
 
 from aiohttp import ClientSession
 
-from .components import CrudComponent, HttpComponent, MetablockResponseError
+from .components import HttpComponent, MetablockResponseError
 from .orgs import Orgs
-from .spaces import Domains, Services, Space, Spaces
+from .spaces import Domains, Extensions, Plugins, Services, Space, Spaces
 from .user import User
 
 DEFAULT_USER_AGENT = f"Python/{'.'.join(map(str, sys.version_info[:2]))} metablock"
@@ -16,8 +16,7 @@ logger = logging.getLogger("metablock.client")
 
 
 class Metablock(HttpComponent):
-    """Metablock client
-    """
+    """Metablock client"""
 
     url: str = os.environ.get("METABLOCK_URL", "https://api.metablock.io/v1")
     auth_key: str = os.getenv("METABLOCK_API_TOKEN", "")
@@ -42,8 +41,8 @@ class Metablock(HttpComponent):
         self.domains = Domains(self)
         self.orgs: Orgs = Orgs(self)
         self.services: Services = Services(self)
-        self.plugins: CrudComponent = CrudComponent(self, "plugins")
-        self.extensions: CrudComponent = CrudComponent(self, "extensions")
+        self.plugins: Plugins = Plugins(self)
+        self.extensions: Extensions = Extensions(self)
 
     def __repr__(self) -> str:
         return self.url

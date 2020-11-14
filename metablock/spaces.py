@@ -5,9 +5,9 @@ from aiohttp.formdata import FormData
 from .components import Component, CrudComponent, MetablockEntity
 
 
+# Space
 class Space(MetablockEntity):
-    """Object representing a space
-    """
+    """Object representing a space"""
 
     @property
     def services(self) -> "SpaceServices":
@@ -19,15 +19,14 @@ class Space(MetablockEntity):
 
 
 class Spaces(CrudComponent):
-    """Spaces
-    """
+    """Spaces"""
 
     Entity = Space
 
 
+# Service
 class Service(MetablockEntity):
-    """Object representing a service
-    """
+    """Object representing a service"""
 
     @property
     def plugins(self):
@@ -48,33 +47,31 @@ class Service(MetablockEntity):
         return await self.post(f"{self.url}/deployments", data=data, callback=callback)
 
 
-class Extension(MetablockEntity):
-    """Object representing an Extension
-    """
-
-
-class SpaceExtension(MetablockEntity):
-    """Object representing an SpaceExtension
-    """
-
-
 class Services(CrudComponent):
-    """Services
-    """
+    """Services"""
 
     Entity = Service
-
-
-class Extensions(CrudComponent):
-    """Extensions
-    """
-
-    Entity = Extension
 
 
 class SpaceServices(Services):
     def list_create_url(self) -> str:
         return "%s/%s" % (self.root.url, self.name)
+
+
+# Extension
+class Extension(MetablockEntity):
+    """Object representing an Extension"""
+
+
+class Extensions(CrudComponent):
+    """Extensions"""
+
+    Entity = Extension
+
+
+# SpaceExtension
+class SpaceExtension(MetablockEntity):
+    """Object representing an SpaceExtension"""
 
 
 class SpaceExtensions(CrudComponent):
@@ -84,12 +81,22 @@ class SpaceExtensions(CrudComponent):
         return "%s/%s" % (self.root.url, self.name)
 
 
+# Plugin
+class Plugin(MetablockEntity):
+    """Object representing an Plugin"""
+
+
+class Plugins(CrudComponent):
+    """Plugins"""
+
+    Entity = Plugin
+
+
 # ServicePlugin
 
 
 class ServicePlugin(MetablockEntity):
-    """Object representing an ServicePlugin
-    """
+    """Object representing an ServicePlugin"""
 
 
 class ServicePlugins(CrudComponent):

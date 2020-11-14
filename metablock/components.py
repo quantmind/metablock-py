@@ -55,8 +55,7 @@ class HttpComponent(ABC):
 
 
 class MetablockEntity(HttpComponent):
-    """A Metablock entity
-    """
+    """A Metablock entity"""
 
     __slots__ = ("root", "data")
 

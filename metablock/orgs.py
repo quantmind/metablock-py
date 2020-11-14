@@ -1,7 +1,7 @@
 from typing import Dict
 
 from .components import CrudComponent, MetablockEntity
-from .spaces import Extensions, Spaces
+from .spaces import Extensions, Plugins, Spaces
 
 
 class OrgSpaces(Spaces):
@@ -14,13 +14,25 @@ class OrgExtensions(Extensions):
         return "%s/%s" % (self.root.url, self.name)
 
 
+class OrgPlugins(Plugins):
+    def list_create_url(self) -> str:
+        return "%s/%s" % (self.root.url, self.name)
+
+
 class Org(MetablockEntity):
-    """Object representing an Organization
-    """
+    """Object representing an Organization"""
+
+    @property
+    def name(self):
+        return self.data.get("short_name", "")
 
     @property
     def spaces(self) -> OrgSpaces:
         return OrgSpaces(self, "spaces")
+
+    @property
+    def plugins(self) -> OrgPlugins:
+        return OrgPlugins(self, "plugins")
 
     @property
     def extensions(self) -> OrgExtensions:
@@ -39,18 +51,15 @@ class Org(MetablockEntity):
 
 
 class Member(MetablockEntity):
-    """Object representing a organization member
-    """
+    """Object representing a organization member"""
 
 
 class Role(MetablockEntity):
-    """Object representing a organization role
-    """
+    """Object representing a organization role"""
 
 
 class Members(CrudComponent):
-    """Metablock organizations
-    """
+    """Metablock organizations"""
 
     Entity = Member
 
@@ -60,8 +69,7 @@ class Members(CrudComponent):
 
 
 class Roles(CrudComponent):
-    """Metablock organizations
-    """
+    """Metablock organizations"""
 
     Entity = Role
 
@@ -71,7 +79,6 @@ class Roles(CrudComponent):
 
 
 class Orgs(CrudComponent):
-    """Metablock organizations
-    """
+    """Metablock organizations"""
 
     Entity = Org

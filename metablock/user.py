@@ -5,8 +5,7 @@ from .orgs import Org, Orgs
 
 
 class User(MetablockEntity):
-    """Object representing a Metablock user
-    """
+    """Object representing a Metablock user"""
 
     @property
     def url(self) -> str:
