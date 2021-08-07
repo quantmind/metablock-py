@@ -26,7 +26,7 @@ lint: 			## run linters
 
 
 mypy:			## run mypy
-	@mypy metablock
+	@poetry run mypy metablock tests
 
 
 test:			## test with coverage
