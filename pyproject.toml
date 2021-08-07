@@ -1,13 +1,10 @@
 [tool.poetry]
-name = "metablock-py"
+name = "metablock"
 version = "0.2.0"
 description = "Metablock cloud python client"
 authors = ["Luca <luca@quantmind.com>"]
 license = "BSD"
 readme = "readme.md"
-packages = [
-    {include = "metablock"}
-]
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.10"
