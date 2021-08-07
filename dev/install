@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
 
-pip install -U pip
-pip install -U wheel setuptools
-pip install -U -r dev/requirements-test.txt
-pip install -U -r dev/requirements.txt
+pip install -U pip poetry
+poetry install
