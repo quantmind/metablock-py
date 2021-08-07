@@ -1,7 +1,7 @@
 # Minimal makefile for Sphinx documentation
 #
 
-.PHONY: help clean docs
+.PHONY: help clean install lint mypy test test-lint publish
 
 help:
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
@@ -17,18 +17,12 @@ clean:			## remove python cache files
 	rm -rf .coverage
 
 
-version:		## display software version
-	@python setup.py --version
-
-
-install: 		## install packages in virtualenv
+install: 		## install packages with poetry
 	@./dev/install
 
 
 lint: 			## run linters
-	flake8
-	isort .
-	./dev/run-black
+	poetry run ./dev/lint
 
 
 mypy:			## run mypy
@@ -36,32 +30,13 @@ mypy:			## run mypy
 
 
 test:			## test with coverage
-	@pytest --cov --cov-report xml --cov-report html
+	@poetry run \
+		pytest --cov --cov-report xml --cov-report html
 
 
 test-lint:		## run linters
-	flake8
-	isort . --check
-	./dev/run-black --check
+	poetry run ./dev/lint --check
 
 
-test-version:		## validate version
-	@agilekit git validate --yes-no
-
-
-bundle3.6:		## build python 3.6 bundle
-	@python setup.py bdist_wheel --python-tag py36
-
-bundle3.7:		## build python 3.7 bundle
-	@python setup.py bdist_wheel --python-tag py37
-
-bundle3.8:		## build python 3.8 bundle
-	@python setup.py sdist bdist_wheel --python-tag py38
-
-
-release-github:		## new tag in github
-	@agilekit --config dev/agile.json git release --yes
-
-
-release-pypi:		## release to pypi and github tag
-	@twine upload dist/* --username lsbardel --password $(PYPI_PASSWORD)
+publish:		## release to pypi and github tag
+	@poetry publish --build -u lsbardel -p $(PYPI_PASSWORD)

@@ -14,9 +14,10 @@ jobs:
       PYTHON_ENV: ci
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       METABLOCK_API_TOKEN: ${{ secrets.METABLOCK_API_TOKEN }}
+      PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
       - uses: actions/checkout@v2
@@ -31,59 +32,8 @@ jobs:
       - name: run tests
         run: make test
       - name: upload coverage
-        if: matrix.python-version == '3.8'
-        run: codecov --file ./build/coverage.xml
-
-  release:
-    runs-on: ubuntu-latest
-    env:
-      PYTHON_ENV: ci
-      PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      GITHUB_TOKEN: ${{ secrets.QMBOT_GITHUB_TOKEN }}
-    needs: build
-    if: github.ref == 'refs/heads/master'
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: make install
-      - name: check if we can publish
-        id: check
-        run: echo ::set-output name=release::$(make test-version)
-      - name: build python bundle
-        if: steps.check.outputs.release == 'yes'
-        run: "make bundle${{ matrix.python-version }}"
-      - name: release to pypi
-        if: steps.check.outputs.release == 'yes'
-        run: make release-pypi
-
-  github:
-    runs-on: ubuntu-latest
-    env:
-      PYTHON_ENV: ci
-      PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      GITHUB_TOKEN: ${{ secrets.QMBOT_GITHUB_TOKEN }}
-    needs: release
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Install dependencies
-        run: make install
-      - name: check if we can publish
-        id: check
-        run: echo ::set-output name=release::$(make test-version)
-      - name: release to github
-        if: steps.check.outputs.release == 'yes'
-        run: make release-github
+        if: matrix.python-version == '3.9'
+        run: poetry run codecov --file ./build/coverage.xml
+      - name: release
+        if: ${{matrix.python-version == '3.9' && github.ref == 'refs/heads/master'}}
+        run: make publish

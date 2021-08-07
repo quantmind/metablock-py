@@ -18,6 +18,10 @@ class User(MetablockEntity):
             f"{self.url}/orgs", wrap=lambda dl: [Org(orgs, d) for d in dl]
         )
 
+    async def get_permissions(self, **kwargs) -> List[Dict]:
+        """List user permissions"""
+        return await self.cli.get(f"{self.url}/permissions", **kwargs)
+
     async def tokens(self) -> List[Dict]:
         return await self.cli.get(f"{self.url}/tokens")
 
