@@ -40,3 +40,7 @@ test-lint:		## run linters
 
 publish:		## release to pypi and github tag
 	@poetry publish --build -u lsbardel -p $(PYPI_PASSWORD)
+
+
+outdated:		## show outdated packages
+	poetry show -o

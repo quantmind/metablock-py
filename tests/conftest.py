@@ -4,8 +4,8 @@ import pytest
 from metablock import Metablock
 
 
-@pytest.fixture(scope="session")
-def loop():
+@pytest.fixture(scope="module")
+def event_loop():
     """Return an instance of the event loop."""
     # Shared loop makes everything easier. Just don't mess it up.
     loop = asyncio.new_event_loop()
@@ -14,7 +14,7 @@ def loop():
     loop.close()
 
 
-@pytest.fixture(scope="session")
-async def cli(loop):
+@pytest.fixture(scope="module")
+async def cli():
     async with Metablock() as cli:
         yield cli
