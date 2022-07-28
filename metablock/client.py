@@ -6,8 +6,9 @@ from typing import Dict, Optional
 from aiohttp import ClientSession
 
 from .components import HttpComponent, MetablockResponseError
+from .extensions import Extensions, Plugins
 from .orgs import Orgs
-from .spaces import Domains, Extensions, Plugins, Services, Space, Spaces
+from .spaces import Domains, Services, Space, Spaces
 from .user import User
 
 DEFAULT_USER_AGENT = f"Python/{'.'.join(map(str, sys.version_info[:2]))} metablock"

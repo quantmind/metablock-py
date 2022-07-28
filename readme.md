@@ -23,4 +23,7 @@ Create the client
 from metablock import Metablock
 
 cli = Metablock()
+
+# get the user associated with the API token
+user = await cli.get_user()
 ```

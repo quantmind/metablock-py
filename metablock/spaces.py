@@ -58,17 +58,6 @@ class SpaceServices(Services):
         return "%s/%s" % (self.root.url, self.name)
 
 
-# Extension
-class Extension(MetablockEntity):
-    """Object representing an Extension"""
-
-
-class Extensions(CrudComponent):
-    """Extensions"""
-
-    Entity = Extension
-
-
 # SpaceExtension
 class SpaceExtension(MetablockEntity):
     """Object representing an SpaceExtension"""
@@ -79,17 +68,6 @@ class SpaceExtensions(CrudComponent):
 
     def list_create_url(self) -> str:
         return "%s/%s" % (self.root.url, self.name)
-
-
-# Plugin
-class Plugin(MetablockEntity):
-    """Object representing an Plugin"""
-
-
-class Plugins(CrudComponent):
-    """Plugins"""
-
-    Entity = Plugin
 
 
 # ServicePlugin

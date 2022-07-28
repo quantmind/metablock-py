@@ -1,7 +1,8 @@
 from typing import Dict
 
 from .components import CrudComponent, MetablockEntity
-from .spaces import Extensions, Plugins, Spaces
+from .extensions import Extensions, Plugins
+from .spaces import Spaces
 
 
 class OrgSpaces(Spaces):
