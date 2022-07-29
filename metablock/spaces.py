@@ -69,6 +69,9 @@ class SpaceExtensions(CrudComponent):
     def list_create_url(self) -> str:
         return "%s/%s" % (self.root.url, self.name)
 
+    def delete_url(self, id_name: str) -> str:
+        return f"{self.parent_url}/{id_name}"
+
 
 # ServicePlugin
 

@@ -150,6 +150,10 @@ class CrudComponent(HttpComponent):
         return f"{self.cli.url}/{self.name}"
 
     @property
+    def parent_url(self) -> str:
+        return f"{self.root.url}/{self.name}"
+
+    @property
     def is_entity(self) -> bool:
         return isinstance(self.root, MetablockEntity)
 
@@ -187,15 +191,16 @@ class CrudComponent(HttpComponent):
         url = self.list_create_url()
         return self.post(url, json=params, callback=callback, wrap=self.wrap)
 
-    def update(self, id_, callback=None, **params):
-        url = f"{self.url}/{id_}"
-        return self.patch(url, json=params, callback=callback, wrap=self.wrap)
+    def update(self, id_name, callback=None, **params):
+        return self.patch(
+            self.update_url(id_name), json=params, callback=callback, wrap=self.wrap
+        )
 
     def upsert(self, callback=None, **params):
         return self.put(self.url, json=params, callback=callback, wrap=self.wrap)
 
-    def delete(self, id_, callback=None):
-        return self.cli.delete(f"{self.url}/{id_}", callback=callback)
+    def delete(self, id_name, callback=None):
+        return self.cli.delete(self.delete_url(id_name), callback=callback)
 
     async def delete_all(self) -> int:
         n = 0
@@ -222,7 +227,10 @@ class CrudComponent(HttpComponent):
         return [self.wrap(d) for d in data]
 
     def list_create_url(self) -> str:
-        if self.is_entity:
-            return f"{self.root.url}/{self.name}"
-        else:
-            return self.url
+        return self.parent_url if self.is_entity else self.url
+
+    def update_url(self, id_name: str) -> str:
+        return f"{self.url}/{id_name}"
+
+    def delete_url(self, id_name: str) -> str:
+        return f"{self.url}/{id_name}"
