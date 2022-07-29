@@ -55,7 +55,7 @@ class Services(CrudComponent):
 
 class SpaceServices(Services):
     def list_create_url(self) -> str:
-        return "%s/%s" % (self.root.url, self.name)
+        return self.parent_url
 
 
 # SpaceExtension
@@ -67,7 +67,7 @@ class SpaceExtensions(CrudComponent):
     Entity = SpaceExtension
 
     def list_create_url(self) -> str:
-        return "%s/%s" % (self.root.url, self.name)
+        return self.parent_url
 
     def delete_url(self, id_name: str) -> str:
         return f"{self.parent_url}/{id_name}"
@@ -84,7 +84,10 @@ class ServicePlugins(CrudComponent):
     Entity = ServicePlugin
 
     def list_create_url(self) -> str:
-        return "%s/%s" % (self.root.url, self.name)
+        return self.parent_url
+
+    def delete_url(self, id_name: str) -> str:
+        return f"{self.parent_url}/{id_name}"
 
 
 # Domain
