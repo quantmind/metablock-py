@@ -10,8 +10,12 @@ class Space(MetablockEntity):
     """Object representing a space"""
 
     @property
-    def services(self) -> "SpaceServices":
-        return SpaceServices(self, "services")
+    def blocks(self) -> "SpaceBlocks":
+        return SpaceBlocks(self, "services")
+
+    @property
+    def services(self) -> "SpaceBlocks":
+        return self.blocks
 
     @property
     def extensions(self) -> "SpaceExtensions":
@@ -25,12 +29,12 @@ class Spaces(CrudComponent):
 
 
 # Service
-class Service(MetablockEntity):
-    """Object representing a service"""
+class Block(MetablockEntity):
+    """Object representing a block in a space"""
 
     @property
     def plugins(self):
-        return ServicePlugins(self, "plugins")
+        return BlockPlugins(self, "plugins")
 
     @property
     def deployments(self):
@@ -46,14 +50,28 @@ class Service(MetablockEntity):
         data.add_field("env", env)
         return await self.post(f"{self.url}/deployments", data=data, callback=callback)
 
+    async def add_route(self, *, callback=None, **kwargs) -> Dict:
+        """Add a new route to the block"""
+        return await self.post(f"{self.url}/routes", json=kwargs, callback=callback)
 
-class Services(CrudComponent):
+    async def update_route(self, name: str, *, callback=None, **kwargs) -> Dict:
+        """Update a route in the block"""
+        return await self.patch(
+            f"{self.url}/routes/{name}", json=kwargs, callback=callback
+        )
+
+
+# For backward compatibility
+Service = Block
+
+
+class Blocks(CrudComponent):
     """Services"""
 
-    Entity = Service
+    Entity = Block
 
 
-class SpaceServices(Services):
+class SpaceBlocks(Blocks):
     def list_create_url(self) -> str:
         return "%s/%s" % (self.root.url, self.name)
 
@@ -76,12 +94,12 @@ class SpaceExtensions(CrudComponent):
 # ServicePlugin
 
 
-class ServicePlugin(MetablockEntity):
+class BlockPlugin(MetablockEntity):
     """Object representing an ServicePlugin"""
 
 
-class ServicePlugins(CrudComponent):
-    Entity = ServicePlugin
+class BlockPlugins(CrudComponent):
+    Entity = BlockPlugin
 
     def list_create_url(self) -> str:
         return "%s/%s" % (self.root.url, self.name)

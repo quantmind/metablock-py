@@ -2,10 +2,10 @@ from .client import Metablock
 from .components import MetablockEntity, MetablockError, MetablockResponseError
 from .extensions import Extension, Plugin
 from .orgs import Org
-from .spaces import Service, Space, SpaceExtension
+from .spaces import Block, Service, Space, SpaceExtension
 from .user import User
 
-__version__ = "0.3.3"
+__version__ = "0.4.0"
 
 __all__ = [
     "Metablock",
@@ -14,6 +14,7 @@ __all__ = [
     "MetablockEntity",
     "Space",
     "Service",
+    "Block",
     "Extension",
     "Plugin",
     "SpaceExtension",

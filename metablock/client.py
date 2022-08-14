@@ -8,7 +8,7 @@ from aiohttp import ClientSession
 from .components import HttpComponent, MetablockResponseError
 from .extensions import Extensions, Plugins
 from .orgs import Orgs
-from .spaces import Domains, Services, Space, Spaces
+from .spaces import Blocks, Domains, Space, Spaces
 from .user import User
 
 DEFAULT_USER_AGENT = f"Python/{'.'.join(map(str, sys.version_info[:2]))} metablock"
@@ -41,7 +41,8 @@ class Metablock(HttpComponent):
         self.spaces: Spaces = Spaces(self)
         self.domains = Domains(self)
         self.orgs: Orgs = Orgs(self)
-        self.services: Services = Services(self)
+        self.blocks: Blocks = Blocks(self, "services")
+        self.services = self.blocks
         self.plugins: Plugins = Plugins(self)
         self.extensions: Extensions = Extensions(self)
 
