@@ -27,3 +27,5 @@ cli = Metablock()
 # get the user associated with the API token
 user = await cli.get_user()
 ```
+
+For the authentication token you can create the `METABLOCK_API_TOKEN` environment variable.

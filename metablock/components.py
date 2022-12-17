@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Union
@@ -53,15 +55,20 @@ class HttpComponent(ABC):
         kwargs["method"] = "DELETE"
         return await self.execute(url, **kwargs)
 
+    def wrap(self, data):
+        return data
+
 
 class MetablockEntity(HttpComponent):
     """A Metablock entity"""
 
     __slots__ = ("root", "data")
 
-    def __init__(self, root: "CrudComponent", data: Dict) -> None:
-        self.root: CrudComponent = root
-        self.data: Dict = data
+    def __init__(
+        self, root: Union[Metablock, CrudComponent, MetablockEntity], data: Dict
+    ) -> None:
+        self.root = root
+        self.data = data
 
     def __repr__(self) -> str:
         return repr(self.data)
@@ -79,7 +86,7 @@ class MetablockEntity(HttpComponent):
         return isinstance(other, self.__class__) and self.data == other.data
 
     @property
-    def cli(self) -> "Metablock":
+    def cli(self) -> Metablock:
         return self.root.cli
 
     @property
@@ -105,7 +112,7 @@ class Component:
     __slots__ = ("root", "name")
 
     def __init__(
-        self, root: Union["Metablock", MetablockEntity], name: str = ""
+        self, root: Union[Metablock, CrudComponent, MetablockEntity], name: str = ""
     ) -> None:
         self.root = root
         self.name = name or self.__class__.__name__.lower()
@@ -130,7 +137,7 @@ class CrudComponent(HttpComponent):
     __slots__ = ("root", "name")
 
     def __init__(
-        self, root: Union["Metablock", MetablockEntity], name: str = ""
+        self, root: Union[Metablock, CrudComponent, MetablockEntity], name: str = ""
     ) -> None:
         self.root = root
         self.name = name or self.__class__.__name__.lower()

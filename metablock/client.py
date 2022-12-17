@@ -24,7 +24,7 @@ class Metablock(HttpComponent):
 
     def __init__(
         self,
-        url: str = None,
+        url: Optional[str] = None,
         auth_key: str = "",
         auth_key_name: str = "x-metablock-api-key",
         session: Optional[ClientSession] = None,
@@ -121,5 +121,5 @@ class Metablock(HttpComponent):
     def _user(self, data: Dict) -> User:
         return User(self, data)
 
-    def _space(self, data: Dict) -> User:
+    def _space(self, data: Dict) -> Space:
         return Space(self.spaces, data)

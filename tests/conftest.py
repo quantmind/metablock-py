@@ -4,14 +4,14 @@ import pytest
 from metablock import Metablock
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def event_loop():
     """Return an instance of the event loop."""
-    # Shared loop makes everything easier. Just don't mess it up.
     loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
+    try:
+        yield loop
+    finally:
+        loop.close()
 
 
 @pytest.fixture(scope="module")
