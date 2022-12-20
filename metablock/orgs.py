@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any
 
 from .components import CrudComponent, MetablockEntity
 from .extensions import Extensions, Plugins
@@ -24,7 +24,7 @@ class Org(MetablockEntity):
     """Object representing an Organization"""
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.data.get("short_name", "")
 
     @property
@@ -47,7 +47,7 @@ class Org(MetablockEntity):
     def roles(self) -> "Roles":
         return Roles(self)
 
-    async def add_info(self, **data) -> Dict:
+    async def add_info(self, **data: Any) -> dict:
         return await self.patch(f"{self.url}/info", json=data, wrap=self.root.wrap)
 
 

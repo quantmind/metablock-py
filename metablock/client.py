@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import logging
 import os
 import sys
-from typing import Dict, Optional
+from typing import Any
 
 from aiohttp import ClientSession
+from yarl import URL
 
-from .components import HttpComponent, MetablockResponseError
+from .components import Callback, HttpComponent, MetablockResponseError
 from .extensions import Extensions, Plugins
 from .orgs import Orgs
 from .spaces import Blocks, Domains, Space, Spaces
@@ -24,17 +27,17 @@ class Metablock(HttpComponent):
 
     def __init__(
         self,
-        url: Optional[str] = None,
+        url: str | None = None,
         auth_key: str = "",
         auth_key_name: str = "x-metablock-api-key",
-        session: Optional[ClientSession] = None,
+        session: ClientSession | None = None,
         user_agent: str = DEFAULT_USER_AGENT,
     ) -> None:
         self.url: str = url if url is not None else self.url
         self.auth_key: str = auth_key or self.auth_key
         self.auth_key_name = auth_key_name
-        self.session: Optional[ClientSession] = session
-        self.default_headers: Dict[str, str] = {
+        self.session = session
+        self.default_headers: dict[str, str] = {
             "user-agent": user_agent,
             "accept": "application/json",
         }
@@ -52,32 +55,31 @@ class Metablock(HttpComponent):
     __str__ = __repr__
 
     @property
-    def cli(self):
+    def cli(self) -> Metablock:
         return self
 
     async def close(self) -> None:
         if self.session:
             await self.session.close()
 
-    async def __aenter__(self) -> object:
+    async def __aenter__(self) -> Metablock:
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type: type, exc_val: Any, exc_tb: Any) -> None:
         await self.close()
 
-    async def spec(self):
+    async def spec(self) -> dict:
         return await self.execute(f"{self.url}/spec")
 
     async def execute(
         self,
-        url: str,
+        url: str | URL,
         method: str = "",
-        headers: Optional[Dict[str, str]] = None,
-        callback=None,
-        wrap=None,
-        timeout=None,
-        **kw,
-    ):
+        headers: dict[str, str] | None = None,
+        callback: Callback | None = None,
+        wrap: Any = None,
+        **kw: Any,
+    ) -> Any:
         if not self.session:
             self.session = ClientSession()
         method = method or "GET"
@@ -98,28 +100,28 @@ class Metablock(HttpComponent):
         data = await response.json()
         return wrap(data) if wrap else data
 
-    async def get_user(self, callback=None) -> Dict:
+    async def get_user(self, callback: Callback | None = None) -> dict:
         return await self.get(f"{self.url}/user", callback=callback, wrap=self._user)
 
-    async def get_space(self, callback=None) -> Dict:
+    async def get_space(self, callback: Callback | None = None) -> dict:
         return await self.get(f"{self.url}/space", callback=callback, wrap=self._space)
 
-    async def update_user(self, callback=None, **data) -> Dict:
+    async def update_user(self, callback: Callback | None = None, **data: Any) -> dict:
         return await self.patch(
             f"{self.url}/user", json=data, callback=callback, wrap=self._user
         )
 
-    async def delete_user(self, callback=None) -> None:
+    async def delete_user(self, callback: Callback | None = None) -> None:
         return await self.delete(f"{self.url}/user", callback=callback)
 
-    def get_default_headers(self) -> Dict[str, str]:
+    def get_default_headers(self) -> dict[str, str]:
         headers = self.default_headers.copy()
         if self.auth_key:
             headers[self.auth_key_name] = self.auth_key
         return headers
 
-    def _user(self, data: Dict) -> User:
+    def _user(self, data: dict) -> User:
         return User(self, data)
 
-    def _space(self, data: Dict) -> Space:
+    def _space(self, data: dict) -> Space:
         return Space(self.spaces, data)

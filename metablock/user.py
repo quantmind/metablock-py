@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any
 
 from .components import MetablockEntity, MetablockResponseError
 from .orgs import Org, Orgs
@@ -11,24 +11,24 @@ class User(MetablockEntity):
     def url(self) -> str:
         return f"{self.root.url}/user"
 
-    async def orgs(self) -> List[Org]:
+    async def orgs(self) -> list[Org]:
         """List user organizations"""
         orgs = Orgs(self.root)
         return await self.cli.get(
             f"{self.url}/orgs", wrap=lambda dl: [Org(orgs, d) for d in dl]
         )
 
-    async def get_permissions(self, **kwargs) -> List[Dict]:
+    async def get_permissions(self, **kwargs: Any) -> list[dict]:
         """List user permissions"""
         return await self.cli.get(f"{self.url}/permissions", **kwargs)
 
-    async def tokens(self) -> List[Dict]:
+    async def tokens(self) -> list[dict]:
         return await self.cli.get(f"{self.url}/tokens")
 
-    async def create_token(self) -> Dict:
+    async def create_token(self) -> dict:
         return await self.cli.post(f"{self.url}/tokens")
 
-    async def delete_token(self, token_id: str) -> Dict:
+    async def delete_token(self, token_id: str) -> dict:
         return await self.cli.delete(f"{self.url}/tokens/{token_id}")
 
     async def check_password(self, password: str) -> bool:

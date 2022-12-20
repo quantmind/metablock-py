@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Union
+from typing import TYPE_CHECKING, Any, AsyncIterator, Awaitable, Callable, cast
+
+from aiohttp import ClientResponse
+from yarl import URL
 
 from .utils import as_dict, as_params
 
@@ -10,12 +13,15 @@ if TYPE_CHECKING:  # pragma: no cover
     from .client import Metablock
 
 
+Callback = Callable[[ClientResponse], Awaitable[Any]]
+
+
 class MetablockError(Exception):
     pass
 
 
 class MetablockResponseError(MetablockError):
-    def __init__(self, response, message=""):
+    def __init__(self, response: ClientResponse, message: Any = "") -> None:
         self.response = response
         self.message = as_dict(message, "message")
         self.message["request_url"] = str(response.url)
@@ -23,39 +29,39 @@ class MetablockResponseError(MetablockError):
         self.message["response_status"] = response.status
 
     @property
-    def status(self):
+    def status(self) -> int:
         return self.response.status
 
-    def __str__(self):
+    def __str__(self) -> str:
         return json.dumps(self.message, indent=4)
 
 
 class HttpComponent(ABC):
     @abstractmethod
-    def execute(self, url: str, *, method: str = "", **kwargs) -> Any:
+    def execute(self, url: str, *, method: str = "", **kwargs: Any) -> Any:
         """Execute Http request"""
 
-    async def get(self, url: str, **kwargs) -> Any:
+    async def get(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "GET"
         return await self.execute(url, **kwargs)
 
-    async def patch(self, url: str, **kwargs) -> Any:
+    async def patch(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "PATCH"
         return await self.execute(url, **kwargs)
 
-    async def post(self, url: str, **kwargs) -> Any:
+    async def post(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "POST"
         return await self.execute(url, **kwargs)
 
-    async def put(self, url: str, **kwargs) -> Any:
+    async def put(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "PUT"
         return await self.execute(url, **kwargs)
 
-    async def delete(self, url: str, **kwargs) -> Any:
+    async def delete(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "DELETE"
         return await self.execute(url, **kwargs)
 
-    def wrap(self, data):
+    def wrap(self, data: Any) -> Any:
         return data
 
 
@@ -65,7 +71,7 @@ class MetablockEntity(HttpComponent):
     __slots__ = ("root", "data")
 
     def __init__(
-        self, root: Union[Metablock, CrudComponent, MetablockEntity], data: Dict
+        self, root: Metablock | CrudComponent | MetablockEntity, data: dict
     ) -> None:
         self.root = root
         self.data = data
@@ -82,7 +88,7 @@ class MetablockEntity(HttpComponent):
     def __contains__(self, item: str) -> bool:
         return item in self.data
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and self.data == other.data
 
     @property
@@ -90,19 +96,19 @@ class MetablockEntity(HttpComponent):
         return self.root.cli
 
     @property
-    def id(self) -> "str":
+    def id(self) -> str:
         return self.data.get("id", "")
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.data.get("name", "")
 
     @property
-    def url(self):
+    def url(self) -> str:
         return "%s/%s" % (self.root.url, self.id)
 
-    def execute(self, url, **params):
-        return self.cli.execute(url, **params)
+    async def execute(self, url: str | URL, **params: Any) -> Any:
+        return await self.cli.execute(url, **params)
 
     def nice(self) -> str:
         return json.dumps(self.data, indent=4)
@@ -112,7 +118,7 @@ class Component:
     __slots__ = ("root", "name")
 
     def __init__(
-        self, root: Union[Metablock, CrudComponent, MetablockEntity], name: str = ""
+        self, root: Metablock | CrudComponent | MetablockEntity, name: str = ""
     ) -> None:
         self.root = root
         self.name = name or self.__class__.__name__.lower()
@@ -124,7 +130,7 @@ class Component:
         return self.__repr__()
 
     @property
-    def cli(self):
+    def cli(self) -> Metablock:
         return self.root.cli
 
     @property
@@ -137,7 +143,7 @@ class CrudComponent(HttpComponent):
     __slots__ = ("root", "name")
 
     def __init__(
-        self, root: Union[Metablock, CrudComponent, MetablockEntity], name: str = ""
+        self, root: Metablock | CrudComponent | MetablockEntity, name: str = ""
     ) -> None:
         self.root = root
         self.name = name or self.__class__.__name__.lower()
@@ -149,7 +155,7 @@ class CrudComponent(HttpComponent):
         return self.__repr__()
 
     @property
-    def cli(self):
+    def cli(self) -> Metablock:
         return self.root.cli
 
     @property
@@ -164,50 +170,74 @@ class CrudComponent(HttpComponent):
     def is_entity(self) -> bool:
         return isinstance(self.root, MetablockEntity)
 
-    def execute(self, url: str, **kwargs) -> Any:
-        return self.root.execute(url, **kwargs)
+    async def execute(self, url: str | URL, **kwargs: Any) -> Any:
+        return await self.root.execute(url, **kwargs)
 
-    async def paginate(self, **params):
+    async def paginate(self, **params: Any) -> AsyncIterator[MetablockEntity]:
         url = self.list_create_url()
         next_ = url
-        params = as_params(**params)
+        url_params = as_params(**params)
         while next_:
             if not next_.startswith(url):
                 next_ = f'{url}?{next_.split("?")[1]}'
-            data = await self.execute(next_, params=params)
+            data = await self.execute(next_, params=url_params)
             next_ = data.get("next")
             for d in data["data"]:
                 yield self.wrap(d)
 
-    def get_list(self, **params):
+    def get_list(self, **params: Any) -> list[MetablockEntity]:
         url = self.list_create_url()
-        return self.execute(url, params=as_params(**params), wrap=self.wrap_list)
-
-    async def get_full_list(self, **params):
-        return [d async for d in self.paginate(**params)]
-
-    def get(self, id_, callback=None):
-        url = f"{self.url}/{id_}"
-        return self.execute(url, callback=callback, wrap=self.wrap)
-
-    def has(self, id_):
-        url = f"{self.url}/{id_}"
-        return self.get(url, callback=self.head)
-
-    def create(self, callback=None, **params):
-        url = self.list_create_url()
-        return self.post(url, json=params, callback=callback, wrap=self.wrap)
-
-    def update(self, id_name, callback=None, **params):
-        return self.patch(
-            self.update_url(id_name), json=params, callback=callback, wrap=self.wrap
+        return cast(
+            list[MetablockEntity],
+            self.execute(url, params=as_params(**params), wrap=self.wrap_list),
         )
 
-    def upsert(self, callback=None, **params):
-        return self.put(self.url, json=params, callback=callback, wrap=self.wrap)
+    async def get_full_list(self, **params: Any) -> list[MetablockEntity]:
+        return [d async for d in self.paginate(**params)]
 
-    def delete(self, id_name, callback=None):
-        return self.cli.delete(self.delete_url(id_name), callback=callback)
+    async def get(self, id_: str, **kwargs: Any) -> MetablockEntity:  # type: ignore
+        url = f"{self.url}/{id_}"
+        kwargs.update(wrap=self.wrap)
+        return cast(MetablockEntity, await self.execute(url, **kwargs))
+
+    async def has(self, id_: str, **kwargs: Any) -> bool:
+        url = f"{self.url}/{id_}"
+        kwargs.update(wrap=self.head)
+        return cast(bool, await self.get(url, callback=self.head))
+
+    async def create(
+        self, callback: Callback | None = None, **params: Any
+    ) -> MetablockEntity:
+        url = self.list_create_url()
+        return cast(
+            MetablockEntity,
+            await self.post(url, json=params, callback=callback, wrap=self.wrap),
+        )
+
+    async def update(
+        self, id_name: str, callback: Callback | None = None, **params: Any
+    ) -> MetablockEntity:
+        return cast(
+            MetablockEntity,
+            await self.patch(
+                self.update_url(id_name), json=params, callback=callback, wrap=self.wrap
+            ),
+        )
+
+    async def upsert(
+        self, callback: Callback | None = None, **params: Any
+    ) -> MetablockEntity:
+        return cast(
+            MetablockEntity,
+            await self.put(self.url, json=params, callback=callback, wrap=self.wrap),
+        )
+
+    async def delete(  # type: ignore
+        self,
+        id_name: str,
+        **kwargs: Any,
+    ) -> Any:
+        return await self.cli.delete(self.delete_url(id_name), **kwargs)
 
     async def delete_all(self) -> int:
         n = 0
@@ -216,7 +246,7 @@ class CrudComponent(HttpComponent):
             n += 1
         return n
 
-    async def head(self, response):
+    async def head(self, response: ClientResponse) -> bool:
         if response.status == 404:
             return False
         elif response.status == 200:
@@ -224,13 +254,13 @@ class CrudComponent(HttpComponent):
         else:  # pragma: no cover
             raise MetablockResponseError(response)
 
-    def wrap(self, data):
+    def wrap(self, data: dict) -> MetablockEntity:
         return self.Entity(self, data)
 
-    def entity(self, **data):
+    def entity(self, **data: Any) -> MetablockEntity:
         return self.Entity(self, data)
 
-    def wrap_list(self, data):
+    def wrap_list(self, data: list[dict]) -> list[MetablockEntity]:
         return [self.wrap(d) for d in data]
 
     def list_create_url(self) -> str:

@@ -1,7 +1,9 @@
+from typing import Any
+
 from multidict import MultiDict
 
 
-def as_list(key, data):
+def as_list(key: str, data: dict) -> dict:
     v = data.get(key)
     if isinstance(v, str):
         v = [v]
@@ -11,11 +13,11 @@ def as_list(key, data):
     return data
 
 
-def as_dict(data, key="data"):
+def as_dict(data: Any, key: str = "data") -> dict:
     return {key: data} if not isinstance(data, dict) else data
 
 
-def as_params(*, params=None, **kwargs):
-    params = MultiDict(params if params is not None else {})
-    params.update(kwargs)
-    return params
+def as_params(*, params: dict | None = None, **kwargs: Any) -> MultiDict:
+    d = MultiDict(params if params is not None else {})
+    d.update(kwargs)
+    return d
