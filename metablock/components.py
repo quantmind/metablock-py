@@ -91,6 +91,9 @@ class MetablockEntity(HttpComponent):
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, self.__class__) and self.data == other.data
 
+    def _asdict(self) -> dict:
+        return self.data
+
     @property
     def cli(self) -> Metablock:
         return self.root.cli
@@ -185,11 +188,11 @@ class CrudComponent(HttpComponent):
             for d in data["data"]:
                 yield self.wrap(d)
 
-    def get_list(self, **params: Any) -> list[MetablockEntity]:
+    async def get_list(self, **params: Any) -> list[MetablockEntity]:
         url = self.list_create_url()
         return cast(
             list[MetablockEntity],
-            self.execute(url, params=as_params(**params), wrap=self.wrap_list),
+            await self.execute(url, params=as_params(**params), wrap=self.wrap_list),
         )
 
     async def get_full_list(self, **params: Any) -> list[MetablockEntity]:

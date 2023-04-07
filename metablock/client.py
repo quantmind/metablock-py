@@ -100,13 +100,13 @@ class Metablock(HttpComponent):
         data = await response.json()
         return wrap(data) if wrap else data
 
-    async def get_user(self, callback: Callback | None = None) -> dict:
+    async def get_user(self, callback: Callback | None = None) -> User:
         return await self.get(f"{self.url}/user", callback=callback, wrap=self._user)
 
-    async def get_space(self, callback: Callback | None = None) -> dict:
+    async def get_space(self, callback: Callback | None = None) -> Space:
         return await self.get(f"{self.url}/space", callback=callback, wrap=self._space)
 
-    async def update_user(self, callback: Callback | None = None, **data: Any) -> dict:
+    async def update_user(self, callback: Callback | None = None, **data: Any) -> User:
         return await self.patch(
             f"{self.url}/user", json=data, callback=callback, wrap=self._user
         )
