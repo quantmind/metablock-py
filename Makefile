@@ -43,4 +43,4 @@ publish:		## release to pypi and github tag
 
 
 outdated:		## show outdated packages
-	poetry show -o
+	poetry show -o -a
