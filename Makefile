@@ -25,10 +25,6 @@ lint: 			## run linters
 	poetry run ./dev/lint
 
 
-mypy:			## run mypy
-	@poetry run mypy metablock tests
-
-
 test:			## test with coverage
 	@poetry run \
 		pytest --cov --cov-report xml --cov-report html

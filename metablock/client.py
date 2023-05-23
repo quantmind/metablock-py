@@ -100,19 +100,20 @@ class Metablock(HttpComponent):
         data = await response.json()
         return wrap(data) if wrap else data
 
-    async def get_user(self, callback: Callback | None = None) -> User:
-        return await self.get(f"{self.url}/user", callback=callback, wrap=self._user)
+    async def get_user(self, **kw: Any) -> User:
+        kw.setdefault("wrap", self._user)
+        return await self.get(f"{self.url}/user", **kw)
 
-    async def get_space(self, callback: Callback | None = None) -> Space:
-        return await self.get(f"{self.url}/space", callback=callback, wrap=self._space)
+    async def get_space(self, **kw: Any) -> Space:
+        kw.setdefault("wrap", self._space)
+        return await self.get(f"{self.url}/space", **kw)
 
-    async def update_user(self, callback: Callback | None = None, **data: Any) -> User:
-        return await self.patch(
-            f"{self.url}/user", json=data, callback=callback, wrap=self._user
-        )
+    async def update_user(self, **kw: Any) -> User:
+        kw.setdefault("wrap", self._user)
+        return await self.patch(f"{self.url}/user", **kw)
 
-    async def delete_user(self, callback: Callback | None = None) -> None:
-        return await self.delete(f"{self.url}/user", callback=callback)
+    async def delete_user(self, **kw: Any) -> None:
+        return await self.delete(f"{self.url}/user", **kw)
 
     def get_default_headers(self) -> dict[str, str]:
         headers = self.default_headers.copy()
