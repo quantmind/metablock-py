@@ -18,3 +18,8 @@ def event_loop():
 async def cli():
     async with Metablock() as cli:
         yield cli
+
+
+@pytest.fixture
+def invalid_headers(cli):
+    return {cli.auth_key_name: "invalid"}

@@ -110,8 +110,8 @@ class MetablockEntity(HttpComponent):
     def url(self) -> str:
         return "%s/%s" % (self.root.url, self.id)
 
-    async def execute(self, url: str | URL, **params: Any) -> Any:
-        return await self.cli.execute(url, **params)
+    async def execute(self, url: str | URL, **kwargs: Any) -> Any:
+        return await self.cli.execute(url, **kwargs)
 
     def nice(self) -> str:
         return json.dumps(self.data, indent=4)
@@ -188,19 +188,20 @@ class CrudComponent(HttpComponent):
             for d in data["data"]:
                 yield self.wrap(d)
 
-    async def get_list(self, **params: Any) -> list[MetablockEntity]:
+    async def get_list(self, **kwargs: Any) -> list[MetablockEntity]:
         url = self.list_create_url()
+        kwargs.setdefault("wrap", self.wrap_list)
         return cast(
             list[MetablockEntity],
-            await self.execute(url, params=as_params(**params), wrap=self.wrap_list),
+            await self.execute(url, **kwargs),
         )
 
-    async def get_full_list(self, **params: Any) -> list[MetablockEntity]:
-        return [d async for d in self.paginate(**params)]
+    async def get_full_list(self, **kwargs: Any) -> list[MetablockEntity]:
+        return [d async for d in self.paginate(**kwargs)]
 
     async def get(self, id_: str, **kwargs: Any) -> MetablockEntity:  # type: ignore
         url = f"{self.url}/{id_}"
-        kwargs.update(wrap=self.wrap)
+        kwargs.setdefault("wrap", self.wrap)
         return cast(MetablockEntity, await self.execute(url, **kwargs))
 
     async def has(self, id_: str, **kwargs: Any) -> bool:
