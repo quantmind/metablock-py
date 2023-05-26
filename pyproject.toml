@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "metablock"
-version = "0.6.1"
+version = "0.6.2"
 description = "Metablock cloud python client"
 authors = ["Luca <luca@quantmind.com>"]
 license = "BSD"

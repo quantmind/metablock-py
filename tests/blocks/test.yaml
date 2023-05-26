@@ -1,13 +1,10 @@
-html: false
-upstream: http://metablock.prod.svc
 tags:
   - test
 routes:
   - name: main
     protocols:
-      - http
       - https
     paths:
-      - /
+      - /test
     tags:
-      - public
+      - test

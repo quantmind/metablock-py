@@ -50,12 +50,12 @@ async def _apply(path: str, space_name: str, token: str) -> None:
             block = by_name.get(name)
             if block:
                 # update
-                click.echo(f"update block {name}")
                 await mb.services.update(block.id, **config)
+                click.echo(f"updated block {name}")
             else:
                 # create
-                click.echo(f"create new block {name}")
                 await space.services.create(name=name, **config)
+                click.echo(f"created new block {name}")
 
 
 if __name__ == "__main__":

@@ -28,4 +28,9 @@ cli = Metablock()
 user = await cli.get_user()
 ```
 
-For the authentication token you can create the `METABLOCK_API_TOKEN` environment variable.
+For the authentication token, you can use the `METABLOCK_API_TOKEN` environment variable,
+alternatively, you can pass it to the client constructor:
+
+```python
+cli = Metablock(auth_key="your-token")
+```
