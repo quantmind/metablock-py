@@ -1,0 +1,94 @@
+html: false
+upstream: http://trading-api.prod.svc
+tags:
+  - trading
+  - api
+routes:
+  - name: acme
+    protocols:
+      - http
+      - https
+    paths:
+      - /.well-known/acme-challenge
+    tags:
+      - public
+      - acme
+      - status
+  - name: public
+    protocols:
+      - https
+    paths:
+      - /v1/
+      - /v1/countries
+      - /v1/docs
+      - /v1/spec
+      - /v1/status
+      - /v1/_tl
+    strip_path: false
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods:
+            - GET
+    tags:
+      - public
+  - name: private
+    protocols:
+      - https
+    paths:
+      - /v1/accounts
+      - /v1/alerts
+      - /v1/betting
+      - /v1/entities
+      - /v1/events
+      - /v1/gateways
+      - /v1/instruments
+      - /v1/leagues
+      - /v1/names
+      - /v1/orders
+      - /v1/risk
+      - /v1/strategies
+      - /v1/teams
+      - /v1/tasks
+      - /v1/ohlc
+    strip_path: false
+    plugins:
+      - name: key-auth
+        config:
+          key_names:
+            - x-fluidily-api-key
+          anonymous: anonymous
+      - name: jwt
+        config:
+          claims_to_verify:
+            - exp
+          run_on_preflight: false
+          anonymous: anonymous
+      - name: acl
+        config:
+          allow:
+            - service
+            - service-fluidily
+            - users-fluidily
+      - name: request-termination
+        consumer:
+          username: anonymous
+        config:
+          status_code: 403
+          message: "requires authentication"
+      - name: cors
+        config:
+          origins:
+            - "*"
+          headers:
+            - Authorization
+            - Content-Type
+            - User-Agent
+            - x-fluidily-org-id
+          exposed_headers:
+            - Link
+            - X-Total-Count
+            - X-RateLimit-Limit-minute
+            - X-RateLimit-Remaining-minute

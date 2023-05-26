@@ -1,37 +1,16 @@
-import pytest
-from metablock import Metablock, MetablockResponseError
+from click.testing import CliRunner
+from metablock.cli import cli
 
 
-def test_cli(cli: Metablock):
-    assert cli.url == "https://api.metablock.io/v1"
-    assert str(cli) == cli.url
+def test_cli_apply_path_error():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["apply", "foo"])
+    assert result.exit_code == 2
+    assert "Invalid value for 'PATH': Path 'foo' does not exist" in result.output
 
 
-async def test_user(cli: Metablock):
-    user = await cli.get_user()
-    assert user.id
-    orgs = await user.orgs()
-    assert orgs
-
-
-async def test_user_403(cli: Metablock, invalid_headers: dict):
-    with pytest.raises(MetablockResponseError) as exc:
-        await cli.get_user(headers=invalid_headers)
-    assert exc.value.status == 403
-
-
-async def test_orgs_403(cli: Metablock, invalid_headers: dict):
-    user = await cli.get_user()
-    with pytest.raises(MetablockResponseError) as exc:
-        await user.orgs(headers=invalid_headers)
-    assert exc.value.status == 403
-
-
-async def test_space(cli: Metablock):
-    space = await cli.get_space()
-    assert space["name"] == "metablock"
-
-
-async def test_spec(cli: Metablock):
-    spec = await cli.spec()
-    assert spec
+def test_cli_apply_no_space():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["apply", "tests/blocks"])
+    assert result.exit_code == 1
+    assert result.output.startswith("metablock space is required")
