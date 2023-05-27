@@ -9,6 +9,7 @@ from typing import (
     Awaitable,
     Callable,
     Generic,
+    Mapping,
     TypeVar,
     cast,
 )
@@ -46,11 +47,11 @@ class MetablockResponseError(MetablockError):
 
 class HttpComponent(ABC):
     @abstractproperty
-    def cli(self) -> Metablock:
+    def cli(self) -> Metablock:  # pragma: no cover
         ...
 
     @abstractproperty
-    def url(self) -> str:
+    def url(self) -> str:  # pragma: no cover
         ...
 
     def __repr__(self) -> str:
@@ -146,15 +147,14 @@ class CrudComponent(Component, Generic[E]):
         self.factory = factory
 
     async def paginate(self, **params: Any) -> AsyncIterator[E]:
-        url = self.list_create_url()
-        next_ = url
-        url_params = as_params(**params)
+        next_ = self.list_create_url()
+        url_params: Any = as_params(**params)
         while next_:
-            if not next_.startswith(url):
-                next_ = f'{url}?{next_.split("?")[1]}'
-            data = await self.cli.request(next_, params=url_params)
-            next_ = data.get("next")
-            for d in data["data"]:
+            next_, data = await self.cli.request(
+                next_, params=url_params, callback=self._paginated
+            )
+            url_params = None
+            for d in data:
                 yield self.entity(d)
 
     async def get_list(self, **kwargs: Any) -> list[E]:
@@ -175,7 +175,7 @@ class CrudComponent(Component, Generic[E]):
 
     async def has(self, id_: str, **kwargs: Any) -> bool:
         url = f"{self.url}/{id_}"
-        return cast(bool, await self.cli.get(url, callback=self.head))
+        return cast(bool, await self.cli.get(url, callback=self._head))
 
     async def create(self, callback: Callback | None = None, **params: Any) -> E:
         url = self.list_create_url()
@@ -219,14 +219,6 @@ class CrudComponent(Component, Generic[E]):
             n += 1
         return n
 
-    async def head(self, response: ClientResponse) -> bool:
-        if response.status == 404:
-            return False
-        elif response.status == 200:
-            return True
-        else:  # pragma: no cover
-            raise MetablockResponseError(response)
-
     def entity(self, data: dict) -> E:
         return self.factory(self, data)
 
@@ -241,3 +233,22 @@ class CrudComponent(Component, Generic[E]):
 
     def delete_url(self, id_name: str) -> str:
         return f"{self.url}/{id_name}"
+
+    # callbacks
+
+    async def _head(self, response: ClientResponse) -> bool:
+        if response.status == 404:
+            return False
+        elif response.status == 200:
+            return True
+        else:  # pragma: no cover
+            raise MetablockResponseError(response)
+
+    async def _paginated(self, response: ClientResponse) -> Any:
+        next = response.links.get("next")
+        if isinstance(next, Mapping):
+            url = next.get("url")
+        else:
+            url = None
+        data = await self.cli.handle_response(response)
+        return (url, data)

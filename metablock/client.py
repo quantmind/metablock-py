@@ -5,7 +5,7 @@ import os
 import sys
 from typing import Any
 
-from aiohttp import ClientSession
+from aiohttp import ClientResponse, ClientSession
 from yarl import URL
 
 from .components import Callback, HttpComponent, MetablockResponseError
@@ -108,6 +108,10 @@ class Metablock(HttpComponent):
         response = await self.session.request(method, url, headers=headers_, **kw)
         if callback:
             return await callback(response)
+        else:
+            return await self.handle_response(response, wrap=wrap)
+
+    async def handle_response(self, response: ClientResponse, wrap: Any = None) -> Any:
         if response.status == 204:
             return True
         if response.status >= 400:
