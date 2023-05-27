@@ -12,22 +12,20 @@ class Space(MetablockEntity):
     """Object representing a space"""
 
     @property
-    def blocks(self) -> "SpaceBlocks":
-        return SpaceBlocks(self, "services")
+    def blocks(self) -> SpaceBlocks:
+        return SpaceBlocks(self, Block, "services")
 
     @property
-    def services(self) -> "SpaceBlocks":
+    def services(self) -> SpaceBlocks:
         return self.blocks
 
     @property
-    def extensions(self) -> "SpaceExtensions":
-        return SpaceExtensions(self, "extensions")
+    def extensions(self) -> SpaceExtensions:
+        return SpaceExtensions(self, SpaceExtension, "extensions")
 
 
-class Spaces(CrudComponent):
+class Spaces(CrudComponent[Space]):
     """Spaces"""
-
-    Entity = Space
 
 
 # Service
@@ -36,17 +34,17 @@ class Block(MetablockEntity):
 
     @property
     def plugins(self) -> BlockPlugins:
-        return BlockPlugins(self, "plugins")
+        return BlockPlugins(self, BlockPlugin, "plugins")
 
     @property
-    def deployments(self) -> CrudComponent:
-        return CrudComponent(self, "deployments")
+    def deployments(self) -> Deployments:
+        return Deployments(self, Deployment, "deployments")
 
     async def config(self, *, callback: Any = None) -> dict:
-        return await self.get(f"{self.url}/config", callback=callback)
+        return await self.cli.get(f"{self.url}/config", callback=callback)
 
     async def certificate(self, *, callback: Any = None) -> dict:
-        return await self.get(f"{self.url}/certificate", callback=callback)
+        return await self.cli.get(f"{self.url}/certificate", callback=callback)
 
     async def ship(
         self, name: str, bundle: str, env: str = "stage", *, callback: Any = None
@@ -55,17 +53,19 @@ class Block(MetablockEntity):
         data.add_field("name", name)
         data.add_field("bundle", open(bundle, "rb"), filename=bundle)
         data.add_field("env", env)
-        return await self.post(f"{self.url}/deployments", data=data, callback=callback)
+        return await self.cli.post(
+            f"{self.url}/deployments", data=data, callback=callback
+        )
 
     async def add_route(self, *, callback: Any = None, **kwargs: Any) -> dict:
         """Add a new route to the block"""
-        return await self.post(f"{self.url}/routes", json=kwargs, callback=callback)
+        return await self.cli.post(f"{self.url}/routes", json=kwargs, callback=callback)
 
     async def update_route(
         self, name: str, *, callback: Any = None, **kwargs: Any
     ) -> dict:
         """Update a route in the block"""
-        return await self.patch(
+        return await self.cli.patch(
             f"{self.url}/routes/{name}", json=kwargs, callback=callback
         )
 
@@ -74,10 +74,8 @@ class Block(MetablockEntity):
 Service = Block
 
 
-class Blocks(CrudComponent):
-    """Services"""
-
-    Entity = Block
+class Blocks(CrudComponent[Block]):
+    """Blocks"""
 
 
 class SpaceBlocks(Blocks):
@@ -90,9 +88,7 @@ class SpaceExtension(MetablockEntity):
     """Object representing an SpaceExtension"""
 
 
-class SpaceExtensions(CrudComponent):
-    Entity = SpaceExtension
-
+class SpaceExtensions(CrudComponent[SpaceExtension]):
     def list_create_url(self) -> str:
         return "%s/%s" % (self.root.url, self.name)
 
@@ -107,11 +103,20 @@ class BlockPlugin(MetablockEntity):
     """Object representing an ServicePlugin"""
 
 
-class BlockPlugins(CrudComponent):
-    Entity = BlockPlugin
-
+class BlockPlugins(CrudComponent[BlockPlugin]):
     def list_create_url(self) -> str:
         return "%s/%s" % (self.root.url, self.name)
+
+
+# Deployment
+
+
+class Deployment(MetablockEntity):
+    """Object representing a deployment"""
+
+
+class Deployments(CrudComponent[Deployment]):
+    """deployments"""
 
 
 # Domain

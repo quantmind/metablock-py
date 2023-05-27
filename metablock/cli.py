@@ -1,11 +1,10 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import cast
 
 import click
 import yaml
-from metablock import Metablock, Space
+from metablock import Metablock
 
 METABLOCK_SPACE = os.environ.get("METABLOCK_SPACE", "")
 METABLOCK_API_TOKEN = os.environ.get("METABLOCK_API_TOKEN", "")
@@ -16,17 +15,19 @@ def manifest(file_path: Path) -> dict:
 
 
 @click.group()
-def cli() -> None:
+def main() -> None:
     pass
 
 
-@cli.command()
+@main.command()
 @click.argument("path", type=click.Path(exists=True))
 @click.option("--space", "space_name", help="Space name", default=METABLOCK_SPACE)
 @click.option("--token", help="metablock API token", default=METABLOCK_API_TOKEN)
 def apply(path: str, space_name: str, token: str) -> None:
     """Apply metablock manifest"""
-    asyncio.get_event_loop().run_until_complete(_apply(path, space_name, token))
+    asyncio.get_event_loop().run_until_complete(
+        _apply(path, space_name or METABLOCK_SPACE, token or METABLOCK_API_TOKEN)
+    )
 
 
 async def _apply(path: str, space_name: str, token: str) -> None:
@@ -42,7 +43,7 @@ async def _apply(path: str, space_name: str, token: str) -> None:
         name = file_path.name.split(".")[0]
         blocks.append((name, manifest(file_path)))
     async with Metablock(auth_key=token) as mb:
-        space: Space = cast(Space, await mb.spaces.get(space_name))
+        space = await mb.spaces.get(space_name)
         svc = await space.blocks.get_list()
         click.echo(f"space {space.name} has {len(svc)} blocks")
         by_name = {s["name"]: s for s in svc}
@@ -56,7 +57,3 @@ async def _apply(path: str, space_name: str, token: str) -> None:
                 # create
                 await space.services.create(name=name, **config)
                 click.echo(f"created new block {name}")
-
-
-if __name__ == "__main__":
-    cli()

@@ -9,9 +9,9 @@ from aiohttp import ClientSession
 from yarl import URL
 
 from .components import Callback, HttpComponent, MetablockResponseError
-from .extensions import Extensions, Plugins
-from .orgs import Orgs
-from .spaces import Blocks, Domains, Space, Spaces
+from .extensions import Extension, Extensions, Plugin, Plugins
+from .orgs import Org, Orgs
+from .spaces import Block, Blocks, Domains, Space, Spaces
 from .user import User
 
 DEFAULT_USER_AGENT = f"Python/{'.'.join(map(str, sys.version_info[:2]))} metablock"
@@ -41,13 +41,13 @@ class Metablock(HttpComponent):
             "user-agent": user_agent,
             "accept": "application/json",
         }
-        self.spaces: Spaces = Spaces(self)
+        self.orgs: Orgs = Orgs(self, Org)
+        self.spaces: Spaces = Spaces(self, Space)
+        self.blocks: Blocks = Blocks(self, Block, "services")
+        self.plugins: Plugins = Plugins(self, Plugin)
+        self.extensions: Extensions = Extensions(self, Extension)
         self.domains = Domains(self)
-        self.orgs: Orgs = Orgs(self)
-        self.blocks: Blocks = Blocks(self, "services")
         self.services = self.blocks
-        self.plugins: Plugins = Plugins(self)
-        self.extensions: Extensions = Extensions(self)
 
     def __repr__(self) -> str:
         return self.url
@@ -69,9 +69,29 @@ class Metablock(HttpComponent):
         await self.close()
 
     async def spec(self) -> dict:
-        return await self.execute(f"{self.url}/spec")
+        return await self.request(f"{self.url}/spec")
 
-    async def execute(
+    async def get(self, url: str | URL, **kwargs: Any) -> Any:
+        kwargs["method"] = "GET"
+        return await self.request(url, **kwargs)
+
+    async def patch(self, url: str | URL, **kwargs: Any) -> Any:
+        kwargs["method"] = "PATCH"
+        return await self.request(url, **kwargs)
+
+    async def post(self, url: str | URL, **kwargs: Any) -> Any:
+        kwargs["method"] = "POST"
+        return await self.request(url, **kwargs)
+
+    async def put(self, url: str | URL, **kwargs: Any) -> Any:
+        kwargs["method"] = "PUT"
+        return await self.request(url, **kwargs)
+
+    async def delete(self, url: str | URL, **kwargs: Any) -> Any:
+        kwargs["method"] = "DELETE"
+        return await self.request(url, **kwargs)
+
+    async def request(
         self,
         url: str | URL,
         method: str = "",

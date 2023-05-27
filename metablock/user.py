@@ -13,7 +13,7 @@ class User(MetablockEntity):
 
     async def orgs(self, **kwargs: Any) -> list[Org]:
         """List user organizations"""
-        orgs = Orgs(self.root)
+        orgs = Orgs(self.root, Org)
         kwargs.setdefault("wrap", lambda dl: [Org(orgs, d) for d in dl])
         return await self.cli.get(f"{self.url}/orgs", **kwargs)
 
@@ -32,7 +32,7 @@ class User(MetablockEntity):
 
     async def check_password(self, password: str, **kwargs: Any) -> bool:
         try:
-            return await self.root.post(
+            return await self.cli.post(
                 f"{self.url}/password", json=dict(password=password), **kwargs
             )
         except MetablockResponseError as exc:

@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from typing import Any
 
 from .components import CrudComponent, MetablockEntity
-from .extensions import Extensions, Plugins
-from .spaces import Spaces
+from .extensions import Extension, Extensions, Plugin, Plugins
+from .spaces import Space, Spaces
 
 
 class OrgSpaces(Spaces):
@@ -29,26 +31,26 @@ class Org(MetablockEntity):
 
     @property
     def spaces(self) -> OrgSpaces:
-        return OrgSpaces(self, "spaces")
+        return OrgSpaces(self, Space, "spaces")
 
     @property
     def plugins(self) -> OrgPlugins:
-        return OrgPlugins(self, "plugins")
+        return OrgPlugins(self, Plugin, "plugins")
 
     @property
     def extensions(self) -> OrgExtensions:
-        return OrgExtensions(self, "extensions")
+        return OrgExtensions(self, Extension, "extensions")
 
     @property
-    def members(self) -> "Members":
-        return Members(self)
+    def members(self) -> Members:
+        return Members(self, Member)
 
     @property
-    def roles(self) -> "Roles":
-        return Roles(self)
+    def roles(self) -> Roles:
+        return Roles(self, Role)
 
     async def add_info(self, **data: Any) -> dict:
-        return await self.patch(f"{self.url}/info", json=data, wrap=self.root.wrap)
+        return await self.cli.patch(f"{self.url}/info", json=data)
 
 
 class Member(MetablockEntity):
@@ -59,10 +61,8 @@ class Role(MetablockEntity):
     """Object representing a organization role"""
 
 
-class Members(CrudComponent):
-    """Metablock organizations"""
-
-    Entity = Member
+class Members(CrudComponent[Member]):
+    """Metablock organization members"""
 
     @property
     def url(self) -> str:
@@ -79,7 +79,5 @@ class Roles(CrudComponent):
         return f"{self.root.url}/{self.name}"
 
 
-class Orgs(CrudComponent):
+class Orgs(CrudComponent[Org]):
     """Metablock organizations"""
-
-    Entity = Org

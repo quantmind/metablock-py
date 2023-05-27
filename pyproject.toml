@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "metablock"
-version = "0.6.2"
+version = "0.7.0"
 description = "Metablock cloud python client"
 authors = ["Luca <luca@quantmind.com>"]
 license = "BSD"
@@ -30,3 +30,22 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 metablock = "metablock.cli:main"
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = [
+    "tests"
+]
+
+
+[tool.mypy]
+disallow_untyped_calls = true
+warn_return_any = false
+disallow_untyped_defs = true
+warn_no_return = true
+
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
