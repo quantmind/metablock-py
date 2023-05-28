@@ -165,7 +165,7 @@ class CrudComponent(Component, Generic[E]):
             await self.cli.request(url, **kwargs),
         )
 
-    async def get_full_list(self, **kwargs: Any) -> list[MetablockEntity]:
+    async def get_full_list(self, **kwargs: Any) -> list[E]:
         return [d async for d in self.paginate(**kwargs)]
 
     async def get(self, id_: str, **kwargs: Any) -> E:

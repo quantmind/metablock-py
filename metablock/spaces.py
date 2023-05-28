@@ -16,7 +16,8 @@ class Space(MetablockEntity):
         return SpaceBlocks(self, Block, "services")
 
     @property
-    def services(self) -> SpaceBlocks:
+    def services(self) -> SpaceBlocks:  # pragma: no cover
+        # TODO: Deprecate
         return self.blocks
 
     @property
