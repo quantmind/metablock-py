@@ -1,4 +1,5 @@
 import pytest
+
 from metablock import Metablock, MetablockResponseError
 
 

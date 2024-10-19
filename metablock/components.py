@@ -245,9 +245,9 @@ class CrudComponent(Component, Generic[E]):
             raise MetablockResponseError(response)
 
     async def _paginated(self, response: ClientResponse) -> Any:
-        next = response.links.get("next")
-        if isinstance(next, Mapping):
-            url = next.get("url")
+        next_ = response.links.get("next")
+        if isinstance(next_, Mapping):
+            url = next_.get("url")
         else:
             url = None
         data = await self.cli.handle_response(response)
