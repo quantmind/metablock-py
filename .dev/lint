@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -e
+
+BLACK_ARG="--check"
+RUFF_ARG=""
+
+if [ "$1" = "fix" ] ; then
+    BLACK_ARG=""
+    RUFF_ARG="--fix"
+fi
+
+echo "run black"
+black metablock tests ${BLACK_ARG}
+echo "run ruff"
+ruff check metablock tests ${RUFF_ARG}
+echo "run mypy"
+mypy metablock tests

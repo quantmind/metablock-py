@@ -1,11 +1,11 @@
 # Minimal makefile for Sphinx documentation
 #
 
-.PHONY: help clean install lint mypy test test-lint publish
-
+.PHONY: help
 help:
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
+.PHONY: clean
 clean:			## remove python cache files
 	find . -name '__pycache__' | xargs rm -rf
 	find . -name '*.pyc' -delete
@@ -16,27 +16,27 @@ clean:			## remove python cache files
 	rm -rf .mypy_cache
 	rm -rf .coverage
 
-
+.PHONY: install
 install: 		## install packages with poetry
-	@./dev/install
+	@./.dev/install
 
-
+.PHONY: lint
 lint: 			## run linters
-	poetry run ./dev/lint
+	poetry run ./.dev/lint fix
 
-
+.PHONY: test
 test:			## test with coverage
 	@poetry run \
 		pytest -v --cov --cov-report xml --cov-report html
 
-
+.PHONY: test-lint
 test-lint:		## run linters
-	poetry run ./dev/lint --check
+	poetry run ./.dev/lint
 
-
+.PHONY: publish
 publish:		## release to pypi and github tag
-	@poetry publish --build -u lsbardel -p $(PYPI_PASSWORD)
+	@poetry publish --build -u __token__ -p $(PYPI_TOKEN)
 
-
+.PHONY: outdated
 outdated:		## show outdated packages
 	poetry show -o -a
