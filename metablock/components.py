@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -14,7 +14,7 @@ from typing import (
     cast,
 )
 
-from aiohttp import ClientResponse
+from httpx import Response as ClientResponse
 
 from .utils import as_dict, as_params
 
@@ -34,23 +34,25 @@ class MetablockResponseError(MetablockError):
         self.response = response
         self.message = as_dict(message, "message")
         self.message["request_url"] = str(response.url)
-        self.message["request_method"] = response.method
-        self.message["response_status"] = response.status
+        self.message["request_method"] = response.request.method
+        self.message["response_status"] = response.status_code
 
     @property
     def status(self) -> int:
-        return self.response.status
+        return self.response.status_code
 
     def __str__(self) -> str:
         return json.dumps(self.message, indent=4)
 
 
 class HttpComponent(ABC):
-    @abstractproperty
+    @property
+    @abstractmethod
     def cli(self) -> Metablock:  # pragma: no cover
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def url(self) -> str:  # pragma: no cover
         ...
 
@@ -237,9 +239,9 @@ class CrudComponent(Component, Generic[E]):
     # callbacks
 
     async def _head(self, response: ClientResponse) -> bool:
-        if response.status == 404:
+        if response.status_code == 404:
             return False
-        elif response.status == 200:
+        elif response.status_code == 200:
             return True
         else:  # pragma: no cover
             raise MetablockResponseError(response)

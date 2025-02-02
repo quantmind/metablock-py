@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any
+from typing import Any, Self
 
-from aiohttp import ClientResponse, ClientSession
-from yarl import URL
+from httpx import AsyncClient
+from httpx import Response as ClientResponse
 
 from .components import Callback, HttpComponent, MetablockResponseError
 from .extensions import Extension, Extensions, Plugin, Plugins
@@ -30,13 +30,14 @@ class Metablock(HttpComponent):
         url: str | None = None,
         auth_key: str = "",
         auth_key_name: str = "x-metablock-api-key",
-        session: ClientSession | None = None,
+        session: AsyncClient | None = None,
         user_agent: str = DEFAULT_USER_AGENT,
     ) -> None:
         self.url: str = url if url is not None else self.url
         self.auth_key: str = auth_key or self.auth_key
         self.auth_key_name = auth_key_name
         self.session = session
+        self.session_owner = session is None
         self.default_headers: dict[str, str] = {
             "user-agent": user_agent,
             "accept": "application/json",
@@ -49,18 +50,14 @@ class Metablock(HttpComponent):
         self.domains = Domains(self)
         self.services = self.blocks
 
-    def __repr__(self) -> str:
-        return self.url
-
-    __str__ = __repr__
-
     @property
-    def cli(self) -> Metablock:
+    def cli(self) -> Self:
         return self
 
     async def close(self) -> None:
-        if self.session:
-            await self.session.close()
+        if self.session and self.session_owner:
+            await self.session.aclose()
+            self.session = None
 
     async def __aenter__(self) -> Metablock:
         return self
@@ -71,29 +68,29 @@ class Metablock(HttpComponent):
     async def spec(self) -> dict:
         return await self.request(f"{self.url}/spec")
 
-    async def get(self, url: str | URL, **kwargs: Any) -> Any:
+    async def get(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "GET"
         return await self.request(url, **kwargs)
 
-    async def patch(self, url: str | URL, **kwargs: Any) -> Any:
+    async def patch(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "PATCH"
         return await self.request(url, **kwargs)
 
-    async def post(self, url: str | URL, **kwargs: Any) -> Any:
+    async def post(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "POST"
         return await self.request(url, **kwargs)
 
-    async def put(self, url: str | URL, **kwargs: Any) -> Any:
+    async def put(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "PUT"
         return await self.request(url, **kwargs)
 
-    async def delete(self, url: str | URL, **kwargs: Any) -> Any:
+    async def delete(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "DELETE"
         return await self.request(url, **kwargs)
 
     async def request(
         self,
-        url: str | URL,
+        url: str,
         method: str = "",
         headers: dict[str, str] | None = None,
         callback: Callback | None = None,
@@ -101,7 +98,7 @@ class Metablock(HttpComponent):
         **kw: Any,
     ) -> Any:
         if not self.session:
-            self.session = ClientSession()
+            self.session = AsyncClient()
         method = method or "GET"
         headers_ = self.get_default_headers()
         headers_.update(headers or ())
@@ -112,16 +109,16 @@ class Metablock(HttpComponent):
             return await self.handle_response(response, wrap=wrap)
 
     async def handle_response(self, response: ClientResponse, wrap: Any = None) -> Any:
-        if response.status == 204:
+        if response.status_code == 204:
             return True
-        if response.status >= 400:
+        if response.status_code >= 400:
             try:
-                data = await response.json()
+                data = response.json()
             except Exception:
-                data = await response.text()
+                data = response.text
             raise MetablockResponseError(response, data)
         response.raise_for_status()
-        data = await response.json()
+        data = response.json()
         return wrap(data) if wrap else data
 
     async def get_user(self, **kw: Any) -> User:
