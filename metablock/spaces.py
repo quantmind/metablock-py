@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from aiohttp.formdata import FormData
-
 from .components import Component, CrudComponent, MetablockEntity
 
 
@@ -50,12 +48,11 @@ class Block(MetablockEntity):
     async def ship(
         self, name: str, bundle: str, env: str = "stage", *, callback: Any = None
     ) -> dict:
-        data = FormData()
-        data.add_field("name", name)
-        data.add_field("bundle", open(bundle, "rb"), filename=bundle)
-        data.add_field("env", env)
         return await self.cli.post(
-            f"{self.url}/deployments", data=data, callback=callback
+            f"{self.url}/deployments",
+            data=dict(name=name, env=env),
+            files=dict(bundle=(bundle, open(bundle, "rb"))),
+            callback=callback,
         )
 
     async def add_route(self, *, callback: Any = None, **kwargs: Any) -> dict:
