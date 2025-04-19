@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from .components import Component, CrudComponent, MetablockEntity
@@ -11,12 +12,7 @@ class Space(MetablockEntity):
 
     @property
     def blocks(self) -> SpaceBlocks:
-        return SpaceBlocks(self, Block, "services")
-
-    @property
-    def services(self) -> SpaceBlocks:  # pragma: no cover
-        # TODO: Deprecate
-        return self.blocks
+        return SpaceBlocks(self, Block, "blocks")
 
     @property
     def extensions(self) -> SpaceExtensions:
@@ -46,8 +42,14 @@ class Block(MetablockEntity):
         return await self.cli.get(f"{self.url}/certificate", callback=callback)
 
     async def ship(
-        self, name: str, bundle: str, env: str = "stage", *, callback: Any = None
+        self,
+        bundle_path: str | Path,
+        name: str = "",
+        env: str = "stage",
+        *,
+        callback: Any = None,
     ) -> dict:
+        bundle = str(bundle_path)
         return await self.cli.post(
             f"{self.url}/deployments",
             data=dict(name=name, env=env),

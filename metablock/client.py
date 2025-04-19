@@ -44,11 +44,10 @@ class Metablock(HttpComponent):
         }
         self.orgs: Orgs = Orgs(self, Org)
         self.spaces: Spaces = Spaces(self, Space)
-        self.blocks: Blocks = Blocks(self, Block, "services")
+        self.blocks: Blocks = Blocks(self, Block)
         self.plugins: Plugins = Plugins(self, Plugin)
         self.extensions: Extensions = Extensions(self, Extension)
         self.domains = Domains(self)
-        self.services = self.blocks
 
     @property
     def cli(self) -> Self:
@@ -66,7 +65,7 @@ class Metablock(HttpComponent):
         await self.close()
 
     async def spec(self) -> dict:
-        return await self.request(f"{self.url}/spec")
+        return await self.request(f"{self.url}/openapi.json")
 
     async def get(self, url: str, **kwargs: Any) -> Any:
         kwargs["method"] = "GET"
@@ -93,7 +92,7 @@ class Metablock(HttpComponent):
         url: str,
         method: str = "",
         headers: dict[str, str] | None = None,
-        callback: Callback | None = None,
+        callback: Callback | bool | None = None,
         wrap: Any = None,
         **kw: Any,
     ) -> Any:
@@ -103,7 +102,9 @@ class Metablock(HttpComponent):
         headers_ = self.get_default_headers()
         headers_.update(headers or ())
         response = await self.session.request(method, url, headers=headers_, **kw)
-        if callback:
+        if callback is True:
+            return response
+        elif callback:
             return await callback(response)
         else:
             return await self.handle_response(response, wrap=wrap)
@@ -125,10 +126,6 @@ class Metablock(HttpComponent):
         kw.setdefault("wrap", self._user)
         return await self.get(f"{self.url}/user", **kw)
 
-    async def get_space(self, **kw: Any) -> Space:
-        kw.setdefault("wrap", self._space)
-        return await self.get(f"{self.url}/space", **kw)
-
     async def update_user(self, **kw: Any) -> User:
         kw.setdefault("wrap", self._user)
         return await self.patch(f"{self.url}/user", **kw)
@@ -144,6 +141,3 @@ class Metablock(HttpComponent):
 
     def _user(self, data: dict) -> User:
         return User(self, data)
-
-    def _space(self, data: dict) -> Space:
-        return Space(self.spaces, data)

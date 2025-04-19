@@ -15,10 +15,10 @@ class Extensions(CrudComponent[Extension]):
 
 # Plugin
 class Plugin(MetablockEntity):
-    """Object representing an Plugin"""
+    """Object representing a Plugin"""
 
     async def blocks(self, **kwargs: Any) -> list[BlockPlugin]:
-        return await self.cli.get(f"{self.url}/services", **kwargs)
+        return await self.cli.get(f"{self.url}/blocks", **kwargs)
 
 
 class Plugins(CrudComponent[Plugin]):
