@@ -10,6 +10,7 @@ from metablock import Metablock
 
 METABLOCK_SPACE = os.environ.get("METABLOCK_SPACE", "")
 METABLOCK_ENV = os.environ.get("METABLOCK_ENV", "prod")
+METABLOCK_NAME = os.environ.get("METABLOCK_NAME", "shipped from metablock-py")
 METABLOCK_BLOCK_ID = os.environ.get("METABLOCK_BLOCK_ID", "")
 METABLOCK_API_TOKEN = os.environ.get("METABLOCK_API_TOKEN", "")
 
@@ -32,11 +33,19 @@ def main() -> None:
     default=METABLOCK_SPACE,
     show_default=True,
 )
-@click.option("--token", help="metablock API token", default=METABLOCK_API_TOKEN)
+@click.option(
+    "--token",
+    help="metablock API token",
+    default=METABLOCK_API_TOKEN,
+)
 def apply(path: str, space_name: str, token: str) -> None:
     """Apply metablock manifest to a metablock space"""
     asyncio.get_event_loop().run_until_complete(
-        _apply(path, space_name or METABLOCK_SPACE, token or METABLOCK_API_TOKEN)
+        _apply(
+            path,
+            space_name or METABLOCK_SPACE,
+            token or METABLOCK_API_TOKEN,
+        )
     )
 
 
@@ -58,14 +67,30 @@ def apply(path: str, space_name: str, token: str) -> None:
 @click.option(
     "--name",
     help="Optional deployment name",
-    default="shipped from metablock-py",
+    default=METABLOCK_NAME,
     show_default=True,
 )
-@click.option("--token", help="metablock API token", default=METABLOCK_API_TOKEN)
-def ship(path: str, env: str, block_id: str, name: str, token: str) -> None:
+@click.option(
+    "--token",
+    help="metablock API token",
+    default=METABLOCK_API_TOKEN,
+)
+def ship(
+    path: str,
+    env: str,
+    block_id: str,
+    name: str,
+    token: str,
+) -> None:
     """Deploy a new version of html block"""
     asyncio.get_event_loop().run_until_complete(
-        _ship(path, env, block_id, name, token or METABLOCK_API_TOKEN)
+        _ship(
+            path,
+            env or METABLOCK_ENV,
+            block_id or METABLOCK_BLOCK_ID,
+            name or METABLOCK_NAME,
+            token or METABLOCK_API_TOKEN,
+        )
     )
 
 
