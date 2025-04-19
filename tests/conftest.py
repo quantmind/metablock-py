@@ -1,18 +1,6 @@
-import asyncio
-
 import pytest
 
 from metablock import Metablock
-
-
-@pytest.fixture(scope="module", autouse=True)
-def event_loop():
-    """Return an instance of the event loop."""
-    loop = asyncio.new_event_loop()
-    try:
-        yield loop
-    finally:
-        loop.close()
 
 
 @pytest.fixture(scope="module")
@@ -24,3 +12,8 @@ async def cli():
 @pytest.fixture
 def invalid_headers(cli):
     return {cli.auth_key_name: "invalid"}
+
+
+@pytest.fixture
+async def org(cli: Metablock):
+    return await cli.orgs.get("metablock")
