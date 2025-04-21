@@ -17,3 +17,8 @@ def invalid_headers(cli):
 @pytest.fixture
 async def org(cli: Metablock):
     return await cli.orgs.get("metablock")
+
+
+@pytest.fixture
+def ship_block_id():
+    return "d90de3e3435d4c93b1d1c3a3c6888075"

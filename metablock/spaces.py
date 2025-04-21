@@ -46,15 +46,14 @@ class Block(MetablockEntity):
         bundle_path: str | Path,
         name: str = "",
         env: str = "stage",
-        *,
-        callback: Any = None,
+        **kwargs: Any,
     ) -> dict:
-        bundle = str(bundle_path)
+        p = Path(bundle_path)
         return await self.cli.post(
             f"{self.url}/deployments",
             data=dict(name=name, env=env),
-            files=dict(bundle=(bundle, open(bundle, "rb"))),
-            callback=callback,
+            files=dict(bundle=(p.name, p.read_bytes())),
+            **kwargs,
         )
 
     async def add_route(self, *, callback: Any = None, **kwargs: Any) -> dict:

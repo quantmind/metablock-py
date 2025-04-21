@@ -1,12 +1,12 @@
 import asyncio
 import os
-import zipfile
 from pathlib import Path
 
 import click
 import yaml
 
-from metablock import Metablock
+from metablock import Metablock, __version__
+from metablock.utils import temp_zipfile
 
 METABLOCK_SPACE = os.environ.get("METABLOCK_SPACE", "")
 METABLOCK_ENV = os.environ.get("METABLOCK_ENV", "prod")
@@ -20,6 +20,7 @@ def manifest(file_path: Path) -> dict:
 
 
 @click.group()
+@click.version_option(version=__version__)
 def main() -> None:
     pass
 
@@ -131,25 +132,13 @@ async def _ship(path: str, env: str, block_id: str, name: str, token: str) -> No
         click.echo("metablock block-id is required", err=True)
         raise click.Abort()
     p = Path(path)
-    if not p.is_dir():
-        click.echo(f"path {p} does not exist", err=True)
-        raise click.Abort()
-
-    # Create a zip file from the directory
-    zip_path = p.with_suffix(".zip")
     try:
-        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-            for file in p.rglob("*"):  # Recursively add all files in the directory
-                arcname = file.relative_to(p)  # Preserve relative paths in the archive
-                zipf.write(file, arcname)
-        click.echo(f"Created zip file: {zip_path}")
-
-        async with Metablock(auth_key=token) as mb:
-            block = await mb.blocks.get(block_id)
-            await block.ship(zip_path, name=name, env=env)
-            click.echo(f"shipped {zip_path} to {block.name} {env}")
-    finally:
-        # Clean up the zip file after shipping
-        if zip_path.exists():
-            zip_path.unlink()
-            click.echo(f"Removed temporary zip file: {zip_path}")
+        with temp_zipfile(p) as zip_path:
+            click.echo(f"Created zip file: {zip_path}")
+            async with Metablock(auth_key=token) as mb:
+                block = await mb.blocks.get(block_id)
+                await block.ship(zip_path, name=name, env=env, timeout=10)
+                click.echo(f"shipped {zip_path} to {block.name} {env}")
+    except ValueError as e:
+        click.echo(str(e), err=True)
+        raise click.Abort() from None

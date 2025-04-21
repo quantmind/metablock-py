@@ -27,7 +27,7 @@ lint: 			## run linters
 .PHONY: test
 test:			## test with coverage
 	@poetry run \
-		pytest -v --cov --cov-report xml --cov-report html
+		pytest -v --cov --cov-report xml --cov-report html -x
 
 .PHONY: test-lint
 test-lint:		## run linters

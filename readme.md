@@ -34,3 +34,12 @@ alternatively, you can pass it to the client constructor:
 ```python
 cli = Metablock(auth_key="your-token")
 ```
+
+
+## Command line
+
+You can also use the client from the command line
+
+```bash
+metablock --help
+```
