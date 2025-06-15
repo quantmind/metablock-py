@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 
 import click
-import yaml
 import jinja2
+import yaml
 
 from metablock import Metablock, __version__
 from metablock.utils import temp_zipfile
@@ -16,7 +16,7 @@ METABLOCK_BLOCK_ID = os.environ.get("METABLOCK_BLOCK_ID", "")
 METABLOCK_API_TOKEN = os.environ.get("METABLOCK_API_TOKEN", "")
 
 
-def manifest(file_path: Path, params: dict) -> dict:
+def manifest(file_path: Path, params: dict) -> str:
     env = jinja2.Environment()
     template = env.from_string(file_path.read_text())
     return template.render(**params)
@@ -54,7 +54,7 @@ def apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
             path,
             space_name or METABLOCK_SPACE,
             token or METABLOCK_API_TOKEN,
-            dry_run=dry_run
+            dry_run=dry_run,
         )
     )
 
