@@ -4,6 +4,7 @@ from pathlib import Path
 
 import click
 import yaml
+import jinja2
 
 from metablock import Metablock, __version__
 from metablock.utils import temp_zipfile
@@ -15,8 +16,10 @@ METABLOCK_BLOCK_ID = os.environ.get("METABLOCK_BLOCK_ID", "")
 METABLOCK_API_TOKEN = os.environ.get("METABLOCK_API_TOKEN", "")
 
 
-def manifest(file_path: Path) -> dict:
-    return yaml.safe_load(file_path.read_text())
+def manifest(file_path: Path, params: dict) -> dict:
+    env = jinja2.Environment()
+    template = env.from_string(file_path.read_text())
+    return template.render(**params)
 
 
 @click.group()
@@ -39,13 +42,19 @@ def main() -> None:
     help="metablock API token",
     default=METABLOCK_API_TOKEN,
 )
-def apply(path: str, space_name: str, token: str) -> None:
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Do not apply changes, just show what would be done",
+)
+def apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
     """Apply metablock manifest to a metablock space"""
-    asyncio.get_event_loop().run_until_complete(
+    asyncio.run(
         _apply(
             path,
             space_name or METABLOCK_SPACE,
             token or METABLOCK_API_TOKEN,
+            dry_run=dry_run
         )
     )
 
@@ -84,7 +93,7 @@ def ship(
     token: str,
 ) -> None:
     """Deploy a new version of html block"""
-    asyncio.get_event_loop().run_until_complete(
+    asyncio.run(
         _ship(
             path,
             env or METABLOCK_ENV,
@@ -95,7 +104,7 @@ def ship(
     )
 
 
-async def _apply(path: str, space_name: str, token: str) -> None:
+async def _apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
     if not token:
         click.echo("metablock API token is required", err=True)
         raise click.Abort()
@@ -106,7 +115,14 @@ async def _apply(path: str, space_name: str, token: str) -> None:
     blocks = []
     for file_path in p.glob("*.yaml"):
         name = file_path.name.split(".")[0]
-        blocks.append((name, manifest(file_path)))
+        text = manifest(file_path, dict(space=space_name, block=name))
+        if dry_run:
+            click.echo(text)
+        else:
+            blocks.append((name, yaml.safe_load(text)))
+    if not blocks:
+        click.echo("nothing to do")
+        raise click.Abort()
     async with Metablock(auth_key=token) as mb:
         space = await mb.spaces.get(space_name)
         svc = await space.blocks.get_list()

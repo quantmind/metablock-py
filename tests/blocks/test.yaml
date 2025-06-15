@@ -1,4 +1,4 @@
-upstream: https://mb.test.test
+upstream: https://{{ block }}.test
 tags:
   - test
 routes:
@@ -8,4 +8,5 @@ routes:
     paths:
       - /test
     tags:
-      - test
+      - {{ space }}
+      - {{ block }}
