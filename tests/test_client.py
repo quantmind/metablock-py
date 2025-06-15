@@ -5,7 +5,7 @@ from metablock import Metablock, MetablockResponseError
 pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
-def test_cli(cli: Metablock):
+async def test_cli(cli: Metablock):
     assert str(cli) == cli.url
 
 
