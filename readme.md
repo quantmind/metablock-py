@@ -38,7 +38,13 @@ cli = Metablock(auth_key="your-token")
 
 ## Command line
 
-You can also use the client from the command line
+You can also use the client from the command line, to do so, install the package with the `cli` extra:
+
+```bash
+pip install metablock[cli]
+```
+
+Then you can use the `metablock` command:
 
 ```bash
 metablock --help
