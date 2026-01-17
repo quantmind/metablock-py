@@ -16,7 +16,7 @@ jobs:
       PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v3
@@ -31,11 +31,11 @@ jobs:
       - name: run tests
         run: make test
       - name: upload coverage
-        if: matrix.python-version == '3.13'
+        if: matrix.python-version == '3.14'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./build/coverage.xml
       - name: release
-        if: ${{matrix.python-version == '3.13' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'release'}}
+        if: ${{matrix.python-version == '3.14' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'release'}}
         run: make publish
