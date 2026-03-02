@@ -1,9 +1,11 @@
 import zipfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Hashable, Iterable, Iterator
 
 from multidict import MultiDict
+
+DEFAULT_SKIP_VALUES = frozenset((None,))
 
 
 def as_dict(data: Any, key: str = "data") -> dict:
@@ -14,6 +16,18 @@ def as_params(*, params: dict | None = None, **kwargs: Any) -> MultiDict:
     d = MultiDict(params if params is not None else {})
     d.update(kwargs)
     return d
+
+
+def compact_dict(
+    *args: Iterable[Any],
+    skip_values: set[Any] | frozenset[Any] = DEFAULT_SKIP_VALUES,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    return {
+        k: v
+        for k, v in dict(*args, **kwargs).items()
+        if isinstance(v, bool) or not isinstance(v, Hashable) or v not in skip_values
+    }
 
 
 @contextmanager

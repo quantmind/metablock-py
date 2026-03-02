@@ -1,21 +1,54 @@
-from typing import Any
+from __future__ import annotations
+
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Self
+
+from pydantic import BaseModel, Field
 
 from .components import MetablockEntity, MetablockResponseError
-from .orgs import Org, Orgs
+from .orgs import Org
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .client import Metablock
+
+
+class OrgMember(BaseModel):
+    """Object representing an Organization"""
+
+    org: Org = Field(description="Organization")
+    roles: list[str] = Field(description="The user's roles in the organization")
+
+    @classmethod
+    def create(cls, cli: Metablock, **data: Any) -> Self:
+        name = data["org"]["name"]
+        org = Org(
+            root=cli,
+            root_path=f"orgs/{name}",
+            id=data["org_id"],
+            email=data["org_email"],
+            short_name=name,
+            full_name=data["org_full_name"],
+        )
+        return cls(org=org, roles=data["roles"])
 
 
 class User(MetablockEntity):
     """Object representing a Metablock user"""
 
-    @property
-    def url(self) -> str:
-        return f"{self.root.url}/user"
+    first_name: str = Field(description="The user's first name")
+    last_name: str = Field(description="The user's last name")
+    email: str = Field(description="The user's email address")
+    mobile_phone: str | None = Field(
+        default=None,
+        description="The user's mobile phone number",
+    )
+    created: datetime = Field(description="The user's account creation date")
+    status: str = Field(description="The user's account status")
 
-    async def orgs(self, **kwargs: Any) -> list[Org]:
+    async def orgs(self, **kwargs: Any) -> list[OrgMember]:
         """List user organizations"""
-        orgs = Orgs(self.root, Org)
-        kwargs.setdefault("wrap", lambda dl: [Org(orgs, d) for d in dl])
-        return await self.cli.get(f"{self.url}/orgs", **kwargs)
+        orgs = await self.cli.get(f"{self.url}/orgs", **kwargs)
+        return [OrgMember.create(self.cli, **data) for data in orgs]
 
     async def get_permissions(self, **kwargs: Any) -> list[dict]:
         """List user permissions"""

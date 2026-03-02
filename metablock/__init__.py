@@ -1,8 +1,8 @@
 from .client import Metablock
 from .components import MetablockEntity, MetablockError, MetablockResponseError
-from .extensions import Extension, Plugin
+from .extensions import Extension
 from .orgs import Org
-from .spaces import Block, Service, Space, SpaceExtension
+from .spaces import Block, Space, SpaceExtension
 from .user import User
 
 __version__ = "1.1.1"
@@ -13,10 +13,8 @@ __all__ = [
     "MetablockResponseError",
     "MetablockEntity",
     "Space",
-    "Service",
     "Block",
     "Extension",
-    "Plugin",
     "SpaceExtension",
     "Org",
     "User",
