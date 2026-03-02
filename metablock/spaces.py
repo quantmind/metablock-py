@@ -148,7 +148,7 @@ class Blocks(MetablockComponent):
         await self.cli.delete(f"{self.url}/{block_id}")
 
 
-class SpaceBlocks(Blocks):
+class SpaceBlocks(MetablockComponent):
     async def get_list(
         self,
         *,
@@ -166,6 +166,18 @@ class SpaceBlocks(Blocks):
         """Create a new block in the space"""
         data = await self.cli.post(self.url, json=dict(name=name, **kwargs))
         return block_from_data(self.cli, data)
+
+    async def get(self, block_id_or_name: str) -> Block:
+        """Get a block by id or name"""
+        return await self.cli.blocks.get(block_id_or_name)
+
+    async def update(self, block_id_or_name: str, **kwargs: Any) -> Block:
+        """Update a block by id or name"""
+        return await self.cli.blocks.update(block_id_or_name, **kwargs)
+
+    async def delete(self, block_id_or_name: str) -> None:
+        """Delete a block by id or name"""
+        await self.cli.blocks.delete(block_id_or_name)
 
 
 def block_from_data(cli: Metablock, data: dict) -> Block:
