@@ -5,8 +5,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated, Doc
 
 from .components import MetablockComponent, MetablockEntity
+from .utils import Filter, compact_dict, filter_as_tuple
 
 if TYPE_CHECKING:
     from .client import Metablock
@@ -141,11 +143,23 @@ class Blocks(MetablockComponent):
         data = await self.cli.patch(f"{self.url}/{block_id}", json=kwargs)
         return block_from_data(self.cli, data)
 
+    async def delete(self, block_id: str) -> None:
+        """Delete a block by id"""
+        await self.cli.delete(f"{self.url}/{block_id}")
+
 
 class SpaceBlocks(Blocks):
-    async def get_list(self) -> list[Block]:
+    async def get_list(
+        self,
+        *,
+        name: Annotated[Filter[str] | None, Doc("Filter by block name")] = None,
+        html: Annotated[bool | None, Doc("Filter by HTML blocks")] = None,
+    ) -> list[Block]:
         """Get a list of blocks in the space"""
-        data = await self.cli.get(self.url)
+        data = await self.cli.get(
+            self.url,
+            params=compact_dict(name=filter_as_tuple(name), html=html),
+        )
         return [block_from_data(self.cli, d) for d in data]
 
     async def create(self, name: str, **kwargs: Any) -> Block:
@@ -196,12 +210,33 @@ class SpaceExtensions(MetablockComponent):
 # Deployment
 
 
-class Deployment(MetablockEntity):
+class Deployment(BaseModel):
     """Object representing a deployment"""
+
+    id: str = Field(description="The unique identifier of the deployment")
+    block_id: str = Field(description="The id of the block")
+    name: str = Field(description="The name of the deployment")
+    env: str = Field(description="The environment of the deployment")
+    created: datetime = Field(description="The creation date of the deployment")
+    url: str = Field(description="The URL of the deployment")
 
 
 class Deployments(MetablockComponent):
-    """deployments"""
+    """Block deployments"""
+
+    async def get_list(
+        self,
+        *,
+        env: Annotated[str | None, Doc("Filter by deployment environment")] = None,
+        limit: Annotated[int | None, Doc("Maximum number of spaces to return")] = None,
+        cursor: Annotated[str | None, Doc("Cursor for pagination")] = None,
+    ) -> list[Deployment]:
+        """Get a list of deployments for the block"""
+        data = await self.cli.get(
+            self.url,
+            params=compact_dict(env=env, limit=limit, cursor=cursor),
+        )
+        return [Deployment(**d) for d in data]
 
 
 # Domain

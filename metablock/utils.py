@@ -1,11 +1,25 @@
 import zipfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Hashable, Iterable, Iterator
+from typing import Any, Hashable, Iterable, Iterator, TypeAlias, TypeVar
 
 from multidict import MultiDict
 
 DEFAULT_SKIP_VALUES = frozenset((None,))
+
+T = TypeVar("T")
+Filter: TypeAlias = T | tuple[T, ...] | list[T] | None
+
+
+def filter_as_tuple(filter_: Filter[T]) -> tuple[T, ...] | None:
+    if isinstance(filter_, tuple):
+        return filter_
+    elif isinstance(filter_, list):
+        return tuple(filter_)
+    elif filter_ is None:
+        return None
+    else:
+        return (filter_,)
 
 
 def as_dict(data: Any, key: str = "data") -> dict:

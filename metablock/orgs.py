@@ -94,6 +94,19 @@ class Roles(MetablockComponent):
 class Orgs(MetablockComponent):
     """Metablock organizations"""
 
+    async def get_list(
+        self,
+        *,
+        limit: Annotated[
+            int | None, Doc("Maximum number of organizations to return")
+        ] = None,
+        cursor: Annotated[str | None, Doc("Cursor for pagination")] = None,
+    ) -> list[Org]:
+        data = await self.cli.get(
+            self.url, params=compact_dict(limit=limit, cursor=cursor)
+        )
+        return [Org(root=self, root_path=o["short_name"], **o) for o in data]
+
     async def get(self, name_or_id: str) -> Org:
         """Get an organization by name or id"""
         data = await self.cli.get(f"{self.url}/{name_or_id}")
