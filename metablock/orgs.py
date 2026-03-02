@@ -98,3 +98,8 @@ class Orgs(MetablockComponent):
         """Get an organization by name or id"""
         data = await self.cli.get(f"{self.url}/{name_or_id}")
         return Org(root=self, root_path=data["short_name"], **data)
+
+    async def create(self, **data: Any) -> Org:
+        """Create a new organization"""
+        data = await self.cli.post(self.url, json=data)
+        return Org(root=self, root_path=data["short_name"], **data)

@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
 from .components import MetablockComponent, MetablockEntity
+
+if TYPE_CHECKING:
+    from .client import Metablock
 
 
 # Space
@@ -87,7 +90,7 @@ class Block(MetablockEntity):
         default_factory=list,
         description="An optional set of strings",
     )
-    # space: Space = Field(description="The space of the block")
+    space: Space = Field(description="The space of the block")
 
     @property
     def deployments(self) -> Deployments:
@@ -131,47 +134,39 @@ class Blocks(MetablockComponent):
     async def get(self, block_id: str) -> Block:
         """Get a block by id"""
         data = await self.cli.get(f"{self.url}/{block_id}")
-        return Block(
-            root=self,
-            root_path=data["id"],
-            is_root=data.pop("root", False),
-            **data,
-        )
+        return block_from_data(self.cli, data)
 
     async def update(self, block_id: str, **kwargs: Any) -> Block:
         """Update a block by id"""
         data = await self.cli.patch(f"{self.url}/{block_id}", json=kwargs)
-        return Block(
-            root=self,
-            root_path=data["id"],
-            is_root=data.pop("root", False),
-            **data,
-        )
+        return block_from_data(self.cli, data)
 
 
 class SpaceBlocks(Blocks):
     async def get_list(self) -> list[Block]:
         """Get a list of blocks in the space"""
         data = await self.cli.get(self.url)
-        return [
-            Block(
-                root=self.cli.blocks,
-                root_path=s["id"],
-                is_root=s.pop("root", False),
-                **s,
-            )
-            for s in data
-        ]
+        return [block_from_data(self.cli, d) for d in data]
 
     async def create(self, name: str, **kwargs: Any) -> Block:
         """Create a new block in the space"""
         data = await self.cli.post(self.url, json=dict(name=name, **kwargs))
-        return Block(
-            root=self.cli.cli,
-            root_path=data["id"],
-            is_root=data.pop("root", False),
-            **data,
-        )
+        return block_from_data(self.cli, data)
+
+
+def block_from_data(cli: Metablock, data: dict) -> Block:
+    data = data.copy()
+    data["space"] = Space(
+        root=cli.spaces,
+        root_path=data["space"]["id"],
+        **data["space"],
+    )
+    return Block(
+        root=cli.blocks,
+        root_path=data["id"],
+        is_root=data.pop("root", False),
+        **data,
+    )
 
 
 # SpaceExtension
