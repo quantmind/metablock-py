@@ -5,7 +5,7 @@ from .orgs import Org
 from .spaces import Block, Space, SpaceExtension
 from .user import User
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 __all__ = [
     "Metablock",
