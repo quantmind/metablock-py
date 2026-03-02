@@ -9,9 +9,9 @@ from httpx import AsyncClient
 from httpx import Response as ClientResponse
 
 from .components import Callback, HttpComponent, MetablockResponseError
-from .extensions import Extension, Extensions, Plugin, Plugins
-from .orgs import Org, Orgs
-from .spaces import Block, Blocks, Domains, Space, Spaces
+from .extensions import Extensions
+from .orgs import Orgs
+from .spaces import Blocks, Domains, Spaces
 from .user import User
 
 DEFAULT_USER_AGENT = f"Python/{'.'.join(map(str, sys.version_info[:2]))} metablock"
@@ -42,12 +42,11 @@ class Metablock(HttpComponent):
             "user-agent": user_agent,
             "accept": "application/json",
         }
-        self.orgs: Orgs = Orgs(self, Org)
-        self.spaces: Spaces = Spaces(self, Space)
-        self.blocks: Blocks = Blocks(self, Block)
-        self.plugins: Plugins = Plugins(self, Plugin)
-        self.extensions: Extensions = Extensions(self, Extension)
-        self.domains = Domains(self)
+        self.orgs: Orgs = Orgs(root=self, root_path="orgs")
+        self.spaces: Spaces = Spaces(root=self, root_path="spaces")
+        self.blocks: Blocks = Blocks(root=self, root_path="blocks")
+        self.extensions: Extensions = Extensions(root=self, root_path="extensions")
+        self.domains = Domains(root=self, root_path="domains")
 
     @property
     def cli(self) -> Self:
@@ -65,25 +64,31 @@ class Metablock(HttpComponent):
         await self.close()
 
     async def spec(self) -> dict:
+        """Get the OpenAPI specification of the API"""
         return await self.request(f"{self.url}/openapi.json")
 
     async def get(self, url: str, **kwargs: Any) -> Any:
+        """Make a GET request to the API"""
         kwargs["method"] = "GET"
         return await self.request(url, **kwargs)
 
     async def patch(self, url: str, **kwargs: Any) -> Any:
+        """Make a PATCH request to the API"""
         kwargs["method"] = "PATCH"
         return await self.request(url, **kwargs)
 
     async def post(self, url: str, **kwargs: Any) -> Any:
+        """Make a POST request to the API"""
         kwargs["method"] = "POST"
         return await self.request(url, **kwargs)
 
     async def put(self, url: str, **kwargs: Any) -> Any:
+        """Make a PUT request to the API"""
         kwargs["method"] = "PUT"
         return await self.request(url, **kwargs)
 
     async def delete(self, url: str, **kwargs: Any) -> Any:
+        """Make a DELETE request to the API"""
         kwargs["method"] = "DELETE"
         return await self.request(url, **kwargs)
 
@@ -96,6 +101,7 @@ class Metablock(HttpComponent):
         wrap: Any = None,
         **kw: Any,
     ) -> Any:
+        """Make a request to the API with the given method, url, headers and body."""
         if not self.session:
             self.session = AsyncClient()
         method = method or "GET"
@@ -122,22 +128,19 @@ class Metablock(HttpComponent):
         data = response.json()
         return wrap(data) if wrap else data
 
-    async def get_user(self, **kw: Any) -> User:
-        kw.setdefault("wrap", self._user)
-        return await self.get(f"{self.url}/user", **kw)
+    async def get_user(self, **kwargs: Any) -> User:
+        data = await self.get(f"{self.url}/user", **kwargs)
+        return User(root=self, root_path="user", **data)
 
-    async def update_user(self, **kw: Any) -> User:
-        kw.setdefault("wrap", self._user)
-        return await self.patch(f"{self.url}/user", **kw)
+    async def update_user(self, **params: Any) -> User:
+        data = await self.patch(f"{self.url}/user", **params)
+        return User(root=self, root_path="user", **data)
 
-    async def delete_user(self, **kw: Any) -> None:
-        return await self.delete(f"{self.url}/user", **kw)
+    async def delete_user(self) -> None:
+        return await self.delete(f"{self.url}/user")
 
     def get_default_headers(self) -> dict[str, str]:
         headers = self.default_headers.copy()
         if self.auth_key:
             headers[self.auth_key_name] = self.auth_key
         return headers
-
-    def _user(self, data: dict) -> User:
-        return User(self, data)

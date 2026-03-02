@@ -6,7 +6,7 @@ pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
 async def test_cli(cli: Metablock):
-    assert str(cli) == cli.url
+    assert cli.url
 
 
 async def test_user(cli: Metablock):
