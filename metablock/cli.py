@@ -132,7 +132,7 @@ async def _apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
             block = by_name.get(name)
             if block:
                 # update
-                await mb.blocks.patch(block.id, **config)
+                await mb.blocks.update(block.id, **config)
                 click.echo(f"updated block {name}")
             else:
                 # create

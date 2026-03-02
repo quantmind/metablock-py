@@ -26,6 +26,12 @@ class OrgSpaces(MetablockComponent):
         )
         return [Space(root=self.cli.spaces, root_path=s["name"], **s) for s in data]
 
+    async def get(self, space_id_or_name: str) -> Space:
+        return await self.cli.spaces.get(space_id_or_name)
+
+    async def update(self, space_id_or_name: str, **kwargs: Any) -> Space:
+        return await self.cli.spaces.update(space_id_or_name, **kwargs)
+
     async def create(self, **data: Any) -> Space:
         data = await self.cli.post(f"{self.url}", json=data)
         return Space(root=self.cli.spaces, root_path=data["name"], **data)

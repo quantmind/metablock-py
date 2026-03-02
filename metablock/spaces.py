@@ -17,6 +17,9 @@ class Space(MetablockEntity):
     domain: str = Field(description="The domain of the space")
     org_id: str = Field(description="The organization id of the space")
     org_name: str = Field(description="The organization name of the space")
+    hosted: bool = Field(
+        description="Whether the space is hosted in metablock or self-hosted",
+    )
 
     @property
     def blocks(self) -> SpaceBlocks:
@@ -32,6 +35,10 @@ class Spaces(MetablockComponent):
 
     async def get(self, space_id_or_name: str) -> Space:
         data = await self.cli.get(f"{self.url}/{space_id_or_name}")
+        return Space(root=self, root_path=data["id"], **data)
+
+    async def update(self, space_id_or_name: str, **kwargs: Any) -> Space:
+        data = await self.cli.patch(f"{self.url}/{space_id_or_name}", json=kwargs)
         return Space(root=self, root_path=data["id"], **data)
 
 
@@ -75,6 +82,10 @@ class Block(MetablockEntity):
     routes: list[Route] = Field(
         default_factory=list,
         description="The routes of the block",
+    )
+    tags: list[str] = Field(
+        default_factory=list,
+        description="An optional set of strings",
     )
     # space: Space = Field(description="The space of the block")
 
@@ -127,7 +138,7 @@ class Blocks(MetablockComponent):
             **data,
         )
 
-    async def patch(self, block_id: str, **kwargs: Any) -> Block:
+    async def update(self, block_id: str, **kwargs: Any) -> Block:
         """Update a block by id"""
         data = await self.cli.patch(f"{self.url}/{block_id}", json=kwargs)
         return Block(
