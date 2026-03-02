@@ -32,7 +32,7 @@ class Spaces(MetablockComponent):
 
     async def get(self, space_id_or_name: str) -> Space:
         data = await self.cli.get(f"{self.url}/{space_id_or_name}")
-        return Space(root=self.cli, root_path=data["id"], **data)
+        return Space(root=self, root_path=data["id"], **data)
 
 
 class Route(BaseModel):
@@ -82,9 +82,6 @@ class Block(MetablockEntity):
     def deployments(self) -> Deployments:
         return Deployments(root=self, root_path="deployments")
 
-    async def config(self, *, callback: Any = None) -> dict:
-        return await self.cli.get(f"{self.url}/config", callback=callback)
-
     async def certificate(self) -> Certificate:
         data = await self.cli.get(f"{self.url}/certificate")
         return Certificate(**data)
@@ -124,7 +121,7 @@ class Blocks(MetablockComponent):
         """Get a block by id"""
         data = await self.cli.get(f"{self.url}/{block_id}")
         return Block(
-            root=self.cli,
+            root=self,
             root_path=data["id"],
             is_root=data.pop("root", False),
             **data,
@@ -134,7 +131,7 @@ class Blocks(MetablockComponent):
         """Update a block by id"""
         data = await self.cli.patch(f"{self.url}/{block_id}", json=kwargs)
         return Block(
-            root=self.cli,
+            root=self,
             root_path=data["id"],
             is_root=data.pop("root", False),
             **data,
@@ -146,7 +143,12 @@ class SpaceBlocks(Blocks):
         """Get a list of blocks in the space"""
         data = await self.cli.get(self.url)
         return [
-            Block(root=self.cli, root_path=s["id"], is_root=s.pop("root", False), **s)
+            Block(
+                root=self.cli.blocks,
+                root_path=s["id"],
+                is_root=s.pop("root", False),
+                **s,
+            )
             for s in data
         ]
 
@@ -154,7 +156,7 @@ class SpaceBlocks(Blocks):
         """Create a new block in the space"""
         data = await self.cli.post(self.url, json=dict(name=name, **kwargs))
         return Block(
-            root=self.cli,
+            root=self.cli.cli,
             root_path=data["id"],
             is_root=data.pop("root", False),
             **data,

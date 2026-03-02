@@ -128,8 +128,8 @@ class Metablock(HttpComponent):
         data = response.json()
         return wrap(data) if wrap else data
 
-    async def get_user(self) -> User:
-        data = await self.get(f"{self.url}/user")
+    async def get_user(self, **kwargs: Any) -> User:
+        data = await self.get(f"{self.url}/user", **kwargs)
         return User(root=self, root_path="user", **data)
 
     async def update_user(self, **params: Any) -> User:

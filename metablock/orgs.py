@@ -3,22 +3,32 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import Field
+from typing_extensions import Annotated, Doc
 
 from .components import MetablockComponent, MetablockEntity
 from .extensions import Extension, Extensions
 from .spaces import Space
+from .utils import compact_dict
 
 
 class OrgSpaces(MetablockComponent):
-    async def get_list(self) -> list[Space]:
-        data = await self.cli.get(self.url)
-        return [
-            Space(root=self.cli, root_path=f"spaces/{s['name']}", **s) for s in data
-        ]
+    async def get_list(
+        self,
+        *,
+        limit: Annotated[int | None, Doc("Maximum number of spaces to return")] = None,
+        cursor: Annotated[str | None, Doc("Cursor for pagination")] = None,
+        **kwargs: Any,
+    ) -> list[Space]:
+        data = await self.cli.get(
+            self.url,
+            params=compact_dict(limit=limit, cursor=cursor),
+            **kwargs,
+        )
+        return [Space(root=self.cli.spaces, root_path=s["name"], **s) for s in data]
 
     async def create(self, **data: Any) -> Space:
         data = await self.cli.post(f"{self.url}", json=data)
-        return Space(root=self.cli, root_path=f"spaces/{data['name']}", **data)
+        return Space(root=self.cli.spaces, root_path=data["name"], **data)
 
 
 class OrgExtensions(Extensions):

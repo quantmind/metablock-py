@@ -19,8 +19,8 @@ class OrgMember(BaseModel):
     roles: list[str] = Field(description="The user's roles in the organization")
 
     @classmethod
-    def create(cls, cli: Metablock, **data: Any) -> Self:
-        name = data["org"]["name"]
+    def from_cli(cls, cli: Metablock, **data: Any) -> Self:
+        name = data["org_name"]
         org = Org(
             root=cli,
             root_path=f"orgs/{name}",
@@ -48,7 +48,7 @@ class User(MetablockEntity):
     async def orgs(self, **kwargs: Any) -> list[OrgMember]:
         """List user organizations"""
         orgs = await self.cli.get(f"{self.url}/orgs", **kwargs)
-        return [OrgMember.create(self.cli, **data) for data in orgs]
+        return [OrgMember.from_cli(self.cli, **data) for data in orgs]
 
     async def get_permissions(self, **kwargs: Any) -> list[dict]:
         """List user permissions"""

@@ -125,9 +125,9 @@ async def _apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
         raise click.Abort()
     async with Metablock(auth_key=token) as mb:
         space = await mb.spaces.get(space_name)
-        blocks = await space.blocks.get_list()
-        click.echo(f"space {space.name} has {len(blocks)} blocks")
-        by_name = {s.name: s for s in blocks}
+        space_blocks = await space.blocks.get_list()
+        click.echo(f"space {space.name} has {len(space_blocks)} blocks")
+        by_name = {s.name: s for s in space_blocks}
         for name, config in blocks:
             block = by_name.get(name)
             if block:
