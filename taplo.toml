@@ -12,6 +12,6 @@ trailing_newline = true
 formatting = { reorder_arrays = true, reorder_keys = true }
 include = [ "pyproject.toml" ]
 keys = [
-    "project.optional-dependencies.dev",
+    "dependency-groups.dev",
     "project.optional-dependencies.cli",
 ]

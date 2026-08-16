@@ -25,7 +25,7 @@ from metablock import Metablock
 cli = Metablock()
 
 # get the user associated with the API token
-user = await cli.get_user()
+user = await cli.user.get()
 ```
 
 For the authentication token, you can use the `METABLOCK_API_TOKEN` environment variable,
@@ -35,6 +35,32 @@ alternatively, you can pass it to the client constructor:
 cli = Metablock(auth_key="your-token")
 ```
 
+Most endpoints act within an organization, which is selected by the
+`x-metablock-org-id` header rather than by the URL. Set it via the
+`METABLOCK_ORG_ID` environment variable or pass it to the constructor:
+
+```python
+cli = Metablock(auth_key="your-token", org_id="your-org-id")
+```
+
+### Resource managers
+
+The client exposes a manager per resource. Managers hold the behaviour and
+return plain data models, which are generated from the API's OpenAPI spec and
+live in `metablock.schema`:
+
+```python
+# spaces, blocks and extensions are scoped to the org set on the client
+spaces = await cli.spaces.get_list()
+space = await cli.spaces.get("my-space")
+blocks = await cli.spaces.blocks(space.id)
+
+block = await cli.blocks.get(block_id)
+await cli.blocks.ship(block.id, "path/to/bundle.zip", env="prod")
+
+extensions = await cli.org_extensions.get_list()
+org = await cli.orgs.get("my-org")
+```
 
 ## Command line
 

@@ -10,8 +10,8 @@ if [ "$1" = "fix" ] ; then
 fi
 
 echo "run black"
-black metablock tests ${BLACK_ARG}
+uv run black metablock tests ${BLACK_ARG}
 echo "run ruff"
-ruff check metablock tests ${RUFF_ARG}
+uv run ruff check metablock tests ${RUFF_ARG}
 echo "run mypy"
-mypy metablock tests
+uv run mypy metablock tests

@@ -1,30 +1,33 @@
 import pytest
 
-from metablock import MetablockResponseError, Org
+from metablock import Metablock, MetablockResponseError
 
 pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
-async def test_list_spaces(org: Org) -> None:
-    spaces = await org.spaces.get_list()
+async def test_list_spaces(cli: Metablock) -> None:
+    spaces = await cli.spaces.get_list()
     assert spaces
 
 
-async def test_paginate_spaces(org: Org) -> None:
-    spaces1 = await org.spaces.get_list()
-    spaces2 = await org.spaces.get_list(limit=1)
-    assert spaces1
-    assert len(spaces2) == len(spaces1)
+async def test_get_space(cli: Metablock) -> None:
+    spaces = await cli.spaces.get_list()
+    space = await cli.spaces.get(spaces[0].id)
+    assert space.id == spaces[0].id
 
 
-async def test_get_space_403(org: Org, invalid_headers: dict) -> None:
+async def test_list_spaces_401(cli: Metablock, invalid_headers: dict) -> None:
     with pytest.raises(MetablockResponseError) as exc:
-        await org.spaces.get_list(headers=invalid_headers)
-    assert exc.value.status == 403
+        await cli.spaces.get_list(headers=invalid_headers)
+    assert exc.value.status == 401
 
 
-@pytest.mark.skip(reason="Extensions not implemented yet")
-async def test_get_space_extensions(org: Org) -> None:
-    spaces = await org.spaces.get_list()
-    extensions = await spaces[0].extensions.get_list()
+async def test_get_space_extensions(cli: Metablock) -> None:
+    spaces = await cli.spaces.get_list()
+    extensions = await cli.spaces.extensions(spaces[0].id)
+    assert isinstance(extensions, list)
+
+
+async def test_list_org_extensions(cli: Metablock) -> None:
+    extensions = await cli.org_extensions.get_list()
     assert isinstance(extensions, list)

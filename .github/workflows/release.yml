@@ -1,0 +1,62 @@
+name: release
+
+# Triggered by `v*` tags (push one with `make release`). Runs lint and the test
+# suite, publishes the package to PyPI, then extracts the matching section from
+# docs/release-notes.md and publishes it as the GitHub Release body. Re-runs
+# idempotently update an existing release rather than failing.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHON_ENV: ci
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+      METABLOCK_API_TOKEN: ${{ secrets.METABLOCK_API_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
+      - name: Install dependencies
+        run: uv sync --all-extras --all-groups
+      - name: run lint
+        run: make test-lint
+      - name: run tests
+        run: make test
+      - name: publish to PyPI
+        run: make publish
+      - name: Extract release notes
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          awk -v tag="## ${TAG}" '
+            $0 == tag { in_section = 1; next }
+            /^## / && in_section { exit }
+            in_section { print }
+          ' docs/release-notes.md > /tmp/notes.md
+          if [ ! -s /tmp/notes.md ]; then
+            echo "No section '## ${TAG}' found in docs/release-notes.md" >&2
+            exit 1
+          fi
+          echo "--- extracted notes for ${TAG} ---"
+          cat /tmp/notes.md
+      - name: Publish GitHub Release
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file /tmp/notes.md
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md
+          fi

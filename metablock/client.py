@@ -3,61 +3,77 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from dataclasses import dataclass, field
 from typing import Any, Self
 
-from httpx import AsyncClient
-from httpx import Response as ClientResponse
+from httpx2 import AsyncClient
+from httpx2 import Response as ClientResponse
 
-from .components import Callback, HttpComponent, MetablockResponseError
-from .extensions import Extensions
+from .components import Callback, MetablockResponseError
+from .extensions import Extensions, OrgExtensions
 from .orgs import Orgs
-from .spaces import Blocks, Domains, Spaces
-from .user import User
+from .spaces import Blocks, Spaces
+from .user import Users
 
 DEFAULT_USER_AGENT = f"Python/{'.'.join(map(str, sys.version_info[:2]))} metablock"
 
 logger = logging.getLogger("metablock.client")
 
 
-class Metablock(HttpComponent):
-    """Metablock client"""
+@dataclass
+class Metablock:
+    """Metablock client
 
-    url: str = os.environ.get("METABLOCK_URL", "https://api.metablock.io/v1")
-    auth_key: str = os.getenv("METABLOCK_API_TOKEN", "")
+    Entry point to the API. Resource managers hang off the client and return the
+    plain data models in `metablock.schema`.
+    """
 
-    def __init__(
-        self,
-        url: str | None = None,
-        auth_key: str = "",
-        auth_key_name: str = "x-metablock-api-key",
-        session: AsyncClient | None = None,
-        user_agent: str = DEFAULT_USER_AGENT,
-    ) -> None:
-        self.url: str = url if url is not None else self.url
-        self.auth_key: str = auth_key or self.auth_key
-        self.auth_key_name = auth_key_name
-        self.session = session
-        self.session_owner = session is None
-        self.default_headers: dict[str, str] = {
-            "user-agent": user_agent,
-            "accept": "application/json",
-        }
-        self.orgs: Orgs = Orgs(root=self, root_path="orgs")
-        self.spaces: Spaces = Spaces(root=self, root_path="spaces")
-        self.blocks: Blocks = Blocks(root=self, root_path="blocks")
-        self.extensions: Extensions = Extensions(root=self, root_path="extensions")
-        self.domains = Domains(root=self, root_path="domains")
+    url: str = field(
+        default_factory=lambda: os.environ.get(
+            "METABLOCK_URL", "https://api.metablock.io/v1"
+        )
+    )
+    auth_key: str = field(default_factory=lambda: os.getenv("METABLOCK_API_TOKEN", ""))
+    org_id: str = field(default_factory=lambda: os.getenv("METABLOCK_ORG_ID", ""))
+    auth_key_name: str = "x-metablock-api-key"
+    org_id_name: str = "x-metablock-org-id"
+    session: AsyncClient | None = None
+    user_agent: str = DEFAULT_USER_AGENT
+    session_owner: bool = field(init=False, default=False)
+
+    def __post_init__(self) -> None:
+        self.session_owner = self.session is None
 
     @property
-    def cli(self) -> Self:
-        return self
+    def orgs(self) -> Orgs:
+        return Orgs(self)
+
+    @property
+    def spaces(self) -> Spaces:
+        return Spaces(self)
+
+    @property
+    def blocks(self) -> Blocks:
+        return Blocks(self)
+
+    @property
+    def extensions(self) -> Extensions:
+        return Extensions(self)
+
+    @property
+    def org_extensions(self) -> OrgExtensions:
+        return OrgExtensions(self)
+
+    @property
+    def user(self) -> Users:
+        return Users(self)
 
     async def close(self) -> None:
         if self.session and self.session_owner:
             await self.session.aclose()
             self.session = None
 
-    async def __aenter__(self) -> Metablock:
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(self, exc_type: type, exc_val: Any, exc_tb: Any) -> None:
@@ -128,19 +144,13 @@ class Metablock(HttpComponent):
         data = response.json()
         return wrap(data) if wrap else data
 
-    async def get_user(self, **kwargs: Any) -> User:
-        data = await self.get(f"{self.url}/user", **kwargs)
-        return User(root=self, root_path="user", **data)
-
-    async def update_user(self, **params: Any) -> User:
-        data = await self.patch(f"{self.url}/user", **params)
-        return User(root=self, root_path="user", **data)
-
-    async def delete_user(self) -> None:
-        return await self.delete(f"{self.url}/user")
-
     def get_default_headers(self) -> dict[str, str]:
-        headers = self.default_headers.copy()
+        headers = {
+            "user-agent": self.user_agent,
+            "accept": "application/json",
+        }
         if self.auth_key:
             headers[self.auth_key_name] = self.auth_key
+        if self.org_id:
+            headers[self.org_id_name] = self.org_id
         return headers

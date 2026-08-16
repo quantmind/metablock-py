@@ -1,15 +1,15 @@
 [project]
 name = "metablock"
 description = "Metablock cloud python client"
-version = "1.2.0"
-license = "BSD"
+version = "2.0.0"
+license = "BSD-3-Clause"
 readme = "readme.md"
 authors = [
     { name = "Luca Sbardella", email = "luca@quantmind.com" },
 ]
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.11,<4.0"
 dependencies = [
-    "httpx >= 0.28.1",
+    "httpx2 >= 2.10.0",
     "multidict >= 6.4.3",
     "pydantic (>=2.12.5,<3.0.0)",
 ]
@@ -20,6 +20,8 @@ cli = [
     "pyyaml >= 6.0.2",
     "jinja2 >= 3.1.6",
 ]
+
+[dependency-groups]
 dev = [
     "pytest-asyncio >= 1.3.0",
     "pytest >= 9.0.2",
@@ -30,23 +32,35 @@ dev = [
     "python-dotenv >= 1.2.2",
     "types-pyyaml >= 6.0.12.20240917",
     "ruff >= 0.15.4",
+    "datamodel-code-generator>=0.73.0",
 ]
 
 [build-system]
-requires = [ "poetry-core>=1.0.0" ]
-build-backend = "poetry.core.masonry.api"
+requires = [ "hatchling" ]
+build-backend = "hatchling.build"
 
 [project.scripts]
 metablock = "metablock.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = [ "metablock" ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "module"
 testpaths = [ "tests" ]
 
+# pinned to the lowest supported version: without it black infers py314 from
+# requires-python and cannot run its AST safety check on older interpreters
+[tool.black]
+target-version = [ "py311" ]
+
 [tool.ruff]
 lint.select = [ "A", "E", "W", "F", "I", "B", "N" ]
 line-length = 88
+
+# generated file: field docs come from the API spec, we do not control their length
+lint.per-file-ignores."metablock/schema.py" = [ "E501" ]
 
 [tool.mypy]
 disallow_untyped_calls = true

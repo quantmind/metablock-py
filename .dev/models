@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# Regenerate metablock/schema.py from the metablock OpenAPI spec.
+#
+# Usage:
+#   ./.dev/models                       # generate from the live API spec
+#   ./.dev/models path/to/openapi.json  # generate from a local spec
+#
+# The output is generated code: never edit metablock/schema.py by hand, edit
+# this script and regenerate. The models are plain data; all behaviour lives in
+# the hand-written manager classes, which take and return these models.
+#
+# Notes on the flags:
+#   --disable-timestamp   keeps regeneration diffs clean (no churning header)
+#   --type-mappings       maps `format: email` to plain `str` instead of
+#                         pydantic's EmailStr. EmailStr would add an
+#                         email-validator runtime dependency to a published
+#                         client, and the spec gives OrgMember.org_email a
+#                         default of "" which EmailStr rejects, so real API
+#                         responses would fail validation.
+set -e
+
+SPEC="${1:-https://api.metablock.io/v1/openapi.json}"
+OUT="metablock/schema.py"
+
+# module docstring rather than a comment, so the warning survives into help(),
+# IDE hovers and generated docs
+HEADER=$'"""Data models generated from the metablock OpenAPI spec.\n\nDo not edit this module by hand: change ./.dev/models and run `make models`.\n"""'
+
+if [[ "$SPEC" == http* ]]; then
+    INPUT_ARGS=(--url "$SPEC")
+else
+    INPUT_ARGS=(--input "$SPEC")
+fi
+
+uv run datamodel-codegen \
+    "${INPUT_ARGS[@]}" \
+    --input-file-type openapi \
+    --output "$OUT" \
+    --output-model-type pydantic_v2.BaseModel \
+    --target-python-version 3.11 \
+    --use-standard-collections \
+    --use-union-operator \
+    --use-schema-description \
+    --use-field-description \
+    --use-double-quotes \
+    --disable-timestamp \
+    --field-constraints \
+    --set-default-enum-member \
+    --formatters black isort \
+    --custom-file-header "$HEADER" \
+    --type-mappings "string+email=string"
+
+echo "wrote ${OUT}"
