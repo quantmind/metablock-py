@@ -10,23 +10,22 @@ async def test_cli(cli: Metablock):
 
 
 async def test_user(cli: Metablock):
-    user = await cli.get_user()
+    user = await cli.user.get()
     assert user.id
-    orgs = await user.orgs()
+    orgs = await cli.user.orgs()
     assert orgs
 
 
-async def test_user_403(cli: Metablock, invalid_headers: dict):
+async def test_user_401(cli: Metablock, invalid_headers: dict):
     with pytest.raises(MetablockResponseError) as exc:
-        await cli.get_user(headers=invalid_headers)
-    assert exc.value.status == 403
+        await cli.user.get(headers=invalid_headers)
+    assert exc.value.status == 401
 
 
-async def test_orgs_403(cli: Metablock, invalid_headers: dict):
-    user = await cli.get_user()
+async def test_orgs_401(cli: Metablock, invalid_headers: dict):
     with pytest.raises(MetablockResponseError) as exc:
-        await user.orgs(headers=invalid_headers)
-    assert exc.value.status == 403
+        await cli.user.orgs(headers=invalid_headers)
+    assert exc.value.status == 401
 
 
 async def test_spec(cli: Metablock):

@@ -14,6 +14,7 @@ METABLOCK_ENV = os.environ.get("METABLOCK_ENV", "prod")
 METABLOCK_NAME = os.environ.get("METABLOCK_NAME", "shipped from metablock-py")
 METABLOCK_BLOCK_ID = os.environ.get("METABLOCK_BLOCK_ID", "")
 METABLOCK_API_TOKEN = os.environ.get("METABLOCK_API_TOKEN", "")
+METABLOCK_ORG_ID = os.environ.get("METABLOCK_ORG_ID", "")
 
 
 def manifest(file_path: Path, params: dict) -> str:
@@ -43,17 +44,24 @@ def main() -> None:
     default=METABLOCK_API_TOKEN,
 )
 @click.option(
+    "--org",
+    "org_id",
+    help="metablock organization id the request acts within",
+    default=METABLOCK_ORG_ID,
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Do not apply changes, just show what would be done",
 )
-def apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
+def apply(path: str, space_name: str, token: str, org_id: str, dry_run: bool) -> None:
     """Apply metablock manifest to a metablock space"""
     asyncio.run(
         _apply(
             path,
             space_name or METABLOCK_SPACE,
             token or METABLOCK_API_TOKEN,
+            org_id or METABLOCK_ORG_ID,
             dry_run=dry_run,
         )
     )
@@ -85,14 +93,21 @@ def apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
     help="metablock API token",
     default=METABLOCK_API_TOKEN,
 )
+@click.option(
+    "--org",
+    "org_id",
+    help="metablock organization id the request acts within",
+    default=METABLOCK_ORG_ID,
+)
 def ship(
     path: str,
     env: str,
     block_id: str,
     name: str,
     token: str,
+    org_id: str,
 ) -> None:
-    """Deploy a new version of html block"""
+    """Deploy a new version of an html block"""
     asyncio.run(
         _ship(
             path,
@@ -100,11 +115,14 @@ def ship(
             block_id or METABLOCK_BLOCK_ID,
             name or METABLOCK_NAME,
             token or METABLOCK_API_TOKEN,
+            org_id or METABLOCK_ORG_ID,
         )
     )
 
 
-async def _apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
+async def _apply(
+    path: str, space_name: str, token: str, org_id: str, dry_run: bool
+) -> None:
     if not token:
         click.echo("metablock API token is required", err=True)
         raise click.Abort()
@@ -123,9 +141,9 @@ async def _apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
     if not blocks:
         click.echo("nothing to do")
         raise click.Abort()
-    async with Metablock(auth_key=token) as mb:
+    async with Metablock(auth_key=token, org_id=org_id) as mb:
         space = await mb.spaces.get(space_name)
-        space_blocks = await space.blocks.get_list()
+        space_blocks = await mb.spaces.blocks(space.id)
         click.echo(f"space {space.name} has {len(space_blocks)} blocks")
         by_name = {s.name: s for s in space_blocks}
         for name, config in blocks:
@@ -136,11 +154,13 @@ async def _apply(path: str, space_name: str, token: str, dry_run: bool) -> None:
                 click.echo(f"updated block {name}")
             else:
                 # create
-                await space.blocks.create(name=name, **config)
+                await mb.spaces.create_block(space.id, name=name, **config)
                 click.echo(f"created new block {name}")
 
 
-async def _ship(path: str, env: str, block_id: str, name: str, token: str) -> None:
+async def _ship(
+    path: str, env: str, block_id: str, name: str, token: str, org_id: str
+) -> None:
     if not token:
         click.echo("metablock API token is required", err=True)
         raise click.Abort()
@@ -151,9 +171,9 @@ async def _ship(path: str, env: str, block_id: str, name: str, token: str) -> No
     try:
         with temp_zipfile(p) as zip_path:
             click.echo(f"Created zip file: {zip_path}")
-            async with Metablock(auth_key=token) as mb:
+            async with Metablock(auth_key=token, org_id=org_id) as mb:
                 block = await mb.blocks.get(block_id)
-                await block.ship(zip_path, name=name, env=env, timeout=10)
+                await mb.blocks.ship(block.id, zip_path, name=name, env=env, timeout=10)
                 click.echo(f"shipped {zip_path} to {block.name} {env}")
     except ValueError as e:
         click.echo(str(e), err=True)

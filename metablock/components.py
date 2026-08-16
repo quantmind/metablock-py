@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Protocol, runtime_checkable
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, ClassVar
 
-from httpx import Response as ClientResponse
-from pydantic import BaseModel, ConfigDict, Field
+from httpx2 import Response as ClientResponse
 
 from .utils import as_dict
 
@@ -35,33 +35,18 @@ class MetablockResponseError(MetablockError):
         return json.dumps(self.message, indent=4)
 
 
-@runtime_checkable
-class HttpComponent(Protocol):
-    @property
-    def cli(self) -> Metablock:  # pragma: no cover
-        ...
+@dataclass
+class Manager:
+    """Base class for API resource managers.
 
-    @property
-    def url(self) -> str:  # pragma: no cover
-        ...
+    A manager owns a path below the API root and issues requests through the
+    client. Managers hold the behaviour; the models in `metablock.schema` are
+    plain data generated from the OpenAPI spec and carry no client reference.
+    """
 
-
-class MetablockComponent(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    root: HttpComponent = Field(exclude=True)
-    root_path: str = Field(exclude=True)
-
-    @property
-    def cli(self) -> Metablock:
-        return self.root.cli
+    cli: Metablock
+    path: ClassVar[str] = ""
 
     @property
     def url(self) -> str:
-        return f"{self.root.url}/{self.root_path}"
-
-
-class MetablockEntity(MetablockComponent):
-    """A Metablock entity"""
-
-    id: str = Field(description="The unique identifier of the entity")
+        return f"{self.cli.url}/{self.path}"
