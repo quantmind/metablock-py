@@ -4,6 +4,8 @@
 
 The `ship` command takes a `--timeout` option, defaulting to `METABLOCK_API_TIMEOUT` (60 seconds), replacing the hardcoded 10 second upload timeout.
 
+The package now publishes trove classifiers, including the supported Python versions, so the PyPI Python versions badge renders again.
+
 [Full changelog](https://github.com/quantmind/metablock-py/compare/v2.0.0...v2.0.1)
 
 ## v2.0.0

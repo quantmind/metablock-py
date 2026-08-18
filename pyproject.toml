@@ -8,6 +8,17 @@ authors = [
     { name = "Luca Sbardella", email = "luca@quantmind.com" },
 ]
 requires-python = ">=3.11,<4.0"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "httpx2 >= 2.10.0",
     "multidict >= 6.4.3",
