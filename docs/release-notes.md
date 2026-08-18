@@ -1,5 +1,11 @@
 # Release notes
 
+## v2.0.1
+
+The `ship` command takes a `--timeout` option, defaulting to `METABLOCK_API_TIMEOUT` (60 seconds), replacing the hardcoded 10 second upload timeout.
+
+[Full changelog](https://github.com/quantmind/metablock-py/compare/v2.0.0...v2.0.1)
+
 ## v2.0.0
 
 A ground-up rework of the client. Data models are now generated from the API's

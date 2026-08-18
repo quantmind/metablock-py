@@ -15,6 +15,7 @@ METABLOCK_NAME = os.environ.get("METABLOCK_NAME", "shipped from metablock-py")
 METABLOCK_BLOCK_ID = os.environ.get("METABLOCK_BLOCK_ID", "")
 METABLOCK_API_TOKEN = os.environ.get("METABLOCK_API_TOKEN", "")
 METABLOCK_ORG_ID = os.environ.get("METABLOCK_ORG_ID", "")
+METABLOCK_API_TIMEOUT = int(os.environ.get("METABLOCK_API_TIMEOUT", "60"))
 
 
 def manifest(file_path: Path, params: dict) -> str:
@@ -99,6 +100,13 @@ def apply(path: str, space_name: str, token: str, org_id: str, dry_run: bool) ->
     help="metablock organization id the request acts within",
     default=METABLOCK_ORG_ID,
 )
+@click.option(
+    "--timeout",
+    help="Timeout in seconds for the upload request",
+    type=int,
+    default=METABLOCK_API_TIMEOUT,
+    show_default=True,
+)
 def ship(
     path: str,
     env: str,
@@ -106,6 +114,7 @@ def ship(
     name: str,
     token: str,
     org_id: str,
+    timeout: int,
 ) -> None:
     """Deploy a new version of an html block"""
     asyncio.run(
@@ -116,6 +125,7 @@ def ship(
             name or METABLOCK_NAME,
             token or METABLOCK_API_TOKEN,
             org_id or METABLOCK_ORG_ID,
+            timeout or METABLOCK_API_TIMEOUT,
         )
     )
 
@@ -159,7 +169,13 @@ async def _apply(
 
 
 async def _ship(
-    path: str, env: str, block_id: str, name: str, token: str, org_id: str
+    path: str,
+    env: str,
+    block_id: str,
+    name: str,
+    token: str,
+    org_id: str,
+    timeout: int = METABLOCK_API_TIMEOUT,
 ) -> None:
     if not token:
         click.echo("metablock API token is required", err=True)
@@ -173,7 +189,13 @@ async def _ship(
             click.echo(f"Created zip file: {zip_path}")
             async with Metablock(auth_key=token, org_id=org_id) as mb:
                 block = await mb.blocks.get(block_id)
-                await mb.blocks.ship(block.id, zip_path, name=name, env=env, timeout=10)
+                await mb.blocks.ship(
+                    block.id,
+                    zip_path,
+                    name=name,
+                    env=env,
+                    timeout=timeout,
+                )
                 click.echo(f"shipped {zip_path} to {block.name} {env}")
     except ValueError as e:
         click.echo(str(e), err=True)
