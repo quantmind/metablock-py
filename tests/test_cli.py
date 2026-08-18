@@ -1,4 +1,5 @@
 import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -8,6 +9,18 @@ from click.testing import CliRunner
 from metablock.cli import main
 
 BUNDLE = Path(__file__).parent / "bundle"
+BLOCKS = Path(__file__).parent / "blocks"
+
+
+def block_name(stem: str) -> str:
+    """Block name unique to the running interpreter.
+
+    The CI matrix runs the live suite on four Python versions at once. Applying
+    the same block from every job makes their route rewrites collide: one job
+    lists the block routes while another replaces them, and the API then 500s
+    fetching the plugins of a route that no longer exists.
+    """
+    return f"{stem}-py{sys.version_info.major}{sys.version_info.minor}"
 
 
 @pytest.fixture
@@ -46,13 +59,28 @@ def test_cli_apply_no_space():
     assert result.output.startswith("metablock space is required")
 
 
-def test_cli_apply(org_id: str):
+@pytest.fixture
+def blocks(tmp_path: Path) -> Path:
+    """The block manifests, renamed so each interpreter applies its own block.
+
+    `apply` takes the block name from the manifest filename, so the rename is
+    all it takes to give every CI matrix job a block of its own.
+    """
+    target = tmp_path / "blocks"
+    target.mkdir()
+    for manifest in BLOCKS.glob("*.yaml"):
+        (target / f"{block_name(manifest.stem)}.yaml").write_text(manifest.read_text())
+    return target
+
+
+def test_cli_apply(org_id: str, blocks: Path):
     runner = CliRunner()
     result = runner.invoke(
-        main, ["apply", "tests/blocks", "--space", "mblock", "--org", org_id]
+        main, ["apply", str(blocks), "--space", "mblock", "--org", org_id]
     )
     assert result.exit_code == 0
-    assert result.output.endswith("updated block backend\n")
+    # created on the first run against a new interpreter, updated afterwards
+    assert result.output.rstrip().endswith(f"block {block_name('backend')}")
 
 
 def test_cli_ship(ship_block_id: str, org_id: str, bundle: Path):
